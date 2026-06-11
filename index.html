@@ -1664,9 +1664,18 @@ function isWeak(key){
 function matchAnswer(userVal,answer){
   const u=norm(userVal);
   const stripPron=s=>s.replace(/^(он\/она|он|она|они|оно|ты|вы|мы|я)\s+/i,'').trim();
-  // Split on " / " or "/" to support partial slash answers
+  // Strip grammar annotations like "— жен.р.", "— муж.р.", "(разг.)", "(вежл.)" etc.
+  const stripNote=s=>s.replace(/\s*[—–-]\s*(муж|жен|ср|разг|формал|вежл|неформ|тип|Тип|м\.р|ж\.р|с\.р)[^/]*/gi,'').trim();
+  // For each slash-part, generate: full, no-grammar-note, no-parens, parens-expanded
   const parts=answer.split(/\s*\/\s*/);
-  const variants=[answer,...parts].map(p=>norm(p.replace(/\(.*?\)/g,'').trim())).filter(Boolean);
+  const allForms=[];
+  for(const p of[answer,...parts]){
+    const noNote=stripNote(p);
+    const noParens=noNote.replace(/\(.*?\)/g,'').trim();
+    const withParens=noNote.replace(/\(([^)]+)\)/g,'$1').trim(); // expand: "та (там)" → "та там"
+    allForms.push(p,noNote,noParens,withParens);
+  }
+  const variants=[...new Set(allForms.map(f=>norm(f)).filter(Boolean))];
   const allVariants=[...new Set([...variants,...variants.map(v=>norm(stripPron(v)))])];
   return allVariants.some(v=>u===v)||normFlex(u)===normFlex(norm(answer));
 }

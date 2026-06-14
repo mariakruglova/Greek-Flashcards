@@ -115,6 +115,29 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
 .filter-opt-pct{color:var(--text3);font-size:11px}
 .limit-bar{display:flex;align-items:center;gap:8px;margin-bottom:.5rem;font-size:13px;color:var(--text2)}
 .limit-bar select{font-size:13px;padding:3px 6px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer}
+
+.form-row{margin-bottom:.7rem}
+.form-row label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.form-row select{width:100%;font-size:13px;padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text)}
+.custom-word-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border2);font-size:13px}
+.custom-word-item .cw-info{flex:1;min-width:0}
+.custom-word-item .cw-greek{font-weight:600}
+.custom-word-item .cw-ru{color:var(--text2)}
+.custom-word-item .cw-ex{color:var(--text3);font-size:12px;font-style:italic;margin-top:2px}
+.cw-del{background:none;border:none;color:var(--red,#e55);cursor:pointer;font-size:16px;padding:2px 6px;flex-shrink:0}
+.add-word-btn{padding:8px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--blue,#3b82f6);color:#fff;cursor:pointer;font-size:14px;font-weight:600;width:100%}
+
+.gh-details{margin-top:1rem;border-top:0.5px solid var(--border2);padding-top:.7rem}
+.gh-details summary{font-size:13px;color:var(--text2);cursor:pointer;list-style:none}
+.gh-details summary::-webkit-details-marker{display:none}
+.gh-details summary::before{content:'▸ ';display:inline-block}
+.gh-details[open] summary::before{content:'▾ '}
+.gh-details .form-row{margin-top:.6rem}
+.gh-publish-btn{padding:10px 14px;border:0.5px solid var(--border2);border-radius:var(--r);background:#24292e;color:#fff;cursor:pointer;font-size:14px;font-weight:600;width:100%;margin-top:.8rem}
+.gh-publish-btn:disabled{opacity:.5;cursor:not-allowed}
+.gh-status{font-size:12px;margin-top:6px;line-height:1.4}
+.gh-status.ok{color:var(--green,#5a5)}
+.gh-status.err{color:var(--red,#e55)}
 </style>
 </head>
 <body>
@@ -151,7 +174,9 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <option value="ен9">Ενότητα 9 — Πάμε για ψώνια;</option>
       <option value="доп">📝 Слова от учительницы</option>
       <option value="еда">🍽️ Еда и кулинария (отдельно)</option>
+      <option value="мои_слова">✏️ Мои слова</option>
     </select>
+    <button class="icon-btn" onclick="openAddWord()" title="Добавить своё слово">➕</button>
     <button class="icon-btn" onclick="openStats()">📊</button>
     <button class="icon-btn" onclick="openSettings()" title="Настройки Google Sheets">
       <span class="sync-dot" id="sync-dot"></span> Sheets
@@ -181,6 +206,58 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
     <span id="prog-count"></span>
   </div>
   <div id="main"></div>
+</div>
+
+
+<!-- Add custom word modal -->
+<div class="overlay" id="addword-overlay" onclick="closeAddWord(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
+    <h2>✏️ Добавить своё слово</h2>
+    <div class="form-row">
+      <label>Греческое слово (с артиклем, если нужно)</label>
+      <input type="text" id="cw-greek" placeholder="например: το βιβλιοπωλείο">
+    </div>
+    <div class="form-row">
+      <label>Перевод на русский</label>
+      <input type="text" id="cw-ru" placeholder="например: книжный магазин">
+    </div>
+    <div class="form-row">
+      <label>Пример предложения (необязательно)</label>
+      <input type="text" id="cw-example" placeholder="например: Πάω στο βιβλιοπωλείο.">
+    </div>
+    <div class="form-row">
+      <label>Раздел</label>
+      <select id="cw-tag"></select>
+    </div>
+    <button class="add-word-btn" onclick="submitCustomWord()">Добавить слово</button>
+    <div id="cw-feedback" style="font-size:13px;margin-top:8px"></div>
+    <div style="margin-top:1.2rem">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:14px">Мои слова (<span id="cw-count">0</span>)</h3>
+        <button class="icon-btn" onclick="exportCustomWords()" title="Скопировать список для Клода">📋 Экспорт</button>
+      </div>
+      <div id="cw-list" style="margin-top:8px"></div>
+      <textarea id="cw-export-text" readonly style="display:none;width:100%;height:120px;font-size:11px;font-family:monospace;margin-top:8px;padding:8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text)"></textarea>
+    <details class="gh-details" id="gh-details">
+      <summary>⚙️ Настройка публикации на GitHub</summary>
+      <div class="form-row">
+        <label>Personal Access Token (fine-grained, доступ только к этому репо)</label>
+        <input type="password" id="gh-token" placeholder="github_pat_..." onchange="saveGhSettings()">
+      </div>
+      <div class="form-row">
+        <label>Репозиторий (владелец/имя)</label>
+        <input type="text" id="gh-repo" placeholder="mariakruglova/Greek-Flashcards" onchange="saveGhSettings()">
+      </div>
+      <div class="form-row">
+        <label>Путь к файлу</label>
+        <input type="text" id="gh-path" placeholder="index.html" onchange="saveGhSettings()">
+      </div>
+    </details>
+    <button class="gh-publish-btn" id="gh-publish-btn" onclick="publishToGitHub()">🚀 Опубликовать на GitHub</button>
+    <div id="gh-status" class="gh-status"></div>
+
+    </div>
+  </div>
 </div>
 
 <!-- Settings modal -->
@@ -1441,7 +1518,7 @@ const SENTENCES=[
 
 /* ── data plumbing ── */
 function isSentence(w){return w.length===4&&w[3]==='s'||w[2]==='предложения';}
-function tagOf(t){for(const p of['ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда'])if(t.startsWith(p))return p;return t;}
+function tagOf(t){for(const p of['ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
 const ALL_DATA=[...ALL.map(w=>[...w,'w']),...SENTENCES.map(w=>[...w,'s'])];
 
 /* ── state ── */
@@ -1452,10 +1529,240 @@ let sheetsUrl='';
 /* ── localStorage ── */
 function lsGet(k){try{return localStorage.getItem(k);}catch{return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch{}}
+/* ── custom words (added by user via UI) ── */
+let customWords=[];
+
+function loadCustomWords(){
+  try{customWords=JSON.parse(lsGet('greek_custom_words')||'[]');}catch(e){customWords=[];}
+  rebuildAllData();
+}
+function saveCustomWordsLS(){lsSet('greek_custom_words',JSON.stringify(customWords));}
+
+function rebuildAllData(){
+  ALL_DATA.length=0;
+  ALL_DATA.push(...ALL.map(w=>[...w,'w']));
+  ALL_DATA.push(...customWords.map(w=>[...w,'w']));
+  ALL_DATA.push(...SENTENCES.map(w=>[...w,'s']));
+}
+
+function populateTagSelect(){
+  const sel=document.getElementById('cw-tag');
+  if(!sel) return;
+  const order=['мои_слова','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда'];
+  sel.innerHTML=order.map(t=>`<option value="${t}">${sectionLabels[t]||t}</option>`).join('');
+}
+
+function openAddWord(){
+  const overlay=document.getElementById('addword-overlay');
+  if(!overlay) return;
+  populateTagSelect();
+  renderCustomWordsList();
+  loadGhSettings();
+  document.getElementById('gh-status').textContent='';
+  document.getElementById('gh-status').className='gh-status';
+  document.getElementById('cw-greek').value='';
+  document.getElementById('cw-ru').value='';
+  document.getElementById('cw-example').value='';
+  document.getElementById('cw-feedback').textContent='';
+  document.getElementById('cw-export-text').style.display='none';
+  overlay.style.display='flex';
+  overlay.classList.add('open');
+  if(tg?.BackButton){tg.BackButton.show();tg.BackButton.onClick(closeAddWord);}
+}
+function closeAddWord(e){
+  const overlay=document.getElementById('addword-overlay');
+  if(!overlay) return;
+  if(!e||e.target===overlay){
+    overlay.classList.remove('open');
+    overlay.style.display='';
+    if(tg?.BackButton){tg.BackButton.hide();tg.BackButton.offClick(closeAddWord);}
+  }
+}
+
+function submitCustomWord(){
+  const greek=document.getElementById('cw-greek').value.trim();
+  const ru=document.getElementById('cw-ru').value.trim();
+  const example=document.getElementById('cw-example').value.trim();
+  const tag=document.getElementById('cw-tag').value;
+  const feedback=document.getElementById('cw-feedback');
+  if(!greek||!ru){
+    feedback.innerHTML='<span style="color:var(--red,#e55)">Заполни греческое слово и перевод</span>';
+    return;
+  }
+  // Check for duplicates
+  if(ALL_DATA.some(w=>w[0]===greek)){
+    feedback.innerHTML='<span style="color:var(--red,#e55)">Такое слово уже есть в словаре</span>';
+    return;
+  }
+  customWords.push([greek,ru,tag,example]);
+  saveCustomWordsLS();
+  rebuildAllData();
+  feedback.innerHTML='<span style="color:var(--green,#5a5)">✓ Добавлено!</span>';
+  document.getElementById('cw-greek').value='';
+  document.getElementById('cw-ru').value='';
+  document.getElementById('cw-example').value='';
+  document.getElementById('cw-greek').focus();
+  renderCustomWordsList();
+  // If currently viewing "мои_слова" or "all" filter, refresh
+  const f=document.getElementById('tag-filter')?.value;
+  if(f==='мои_слова'||f==='all') applyFilter();
+}
+
+function renderCustomWordsList(){
+  const list=document.getElementById('cw-list');
+  const count=document.getElementById('cw-count');
+  if(!list||!count) return;
+  count.textContent=customWords.length;
+  if(!customWords.length){
+    list.innerHTML='<div style="font-size:13px;color:var(--text3)">Список пуст. Добавь первое слово выше!</div>';
+    return;
+  }
+  list.innerHTML=customWords.map((w,i)=>`
+    <div class="custom-word-item">
+      <div class="cw-info">
+        <span class="cw-greek">${w[0]}</span> — <span class="cw-ru">${w[1]}</span>
+        ${w[3]?`<div class="cw-ex">${w[3]}</div>`:''}
+        <div style="font-size:11px;color:var(--text3)">${sectionLabels[w[2]]||w[2]}</div>
+      </div>
+      <button class="cw-del" onclick="deleteCustomWord(${i})" title="Удалить">✕</button>
+    </div>
+  `).join('');
+}
+
+function deleteCustomWord(i){
+  customWords.splice(i,1);
+  saveCustomWordsLS();
+  rebuildAllData();
+  renderCustomWordsList();
+  const f=document.getElementById('tag-filter')?.value;
+  if(f==='мои_слова'||f==='all') applyFilter();
+}
+
+function exportCustomWords(){
+  const ta=document.getElementById('cw-export-text');
+  if(!customWords.length){
+    ta.style.display='none';
+    return;
+  }
+  const esc=s=>String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+  const text=customWords.map(w=>`["${esc(w[0])}","${esc(w[1])}","${esc(w[2])}","${esc(w[3]||'')}"]`).join(',\n');
+  ta.value=text;
+  ta.style.display='block';
+  ta.select();
+  try{
+    navigator.clipboard?.writeText(text);
+    document.getElementById('cw-feedback').innerHTML='<span style="color:var(--green,#5a5)">✓ Скопировано! Вставь в чат с Клодом, чтобы добавить слова в основной словарь.</span>';
+  }catch(e){
+    document.getElementById('cw-feedback').innerHTML='Выдели и скопируй текст ниже вручную.';
+  }
+}
+
+/* ── GitHub publish ── */
+function loadGhSettings(){
+  const token=lsGet('greek_github_token')||'';
+  const repo=lsGet('greek_github_repo')||'mariakruglova/Greek-Flashcards';
+  const path=lsGet('greek_github_path')||'index.html';
+  const tEl=document.getElementById('gh-token');
+  const rEl=document.getElementById('gh-repo');
+  const pEl=document.getElementById('gh-path');
+  if(tEl) tEl.value=token;
+  if(rEl) rEl.value=repo;
+  if(pEl) pEl.value=path;
+  // Auto-expand settings if token not yet configured
+  const details=document.getElementById('gh-details');
+  if(details&&!token) details.open=true;
+}
+function saveGhSettings(){
+  lsSet('greek_github_token',document.getElementById('gh-token').value.trim());
+  lsSet('greek_github_repo',document.getElementById('gh-repo').value.trim());
+  lsSet('greek_github_path',document.getElementById('gh-path').value.trim());
+}
+
+function b64EncodeUtf8(str){return btoa(unescape(encodeURIComponent(str)));}
+function b64DecodeUtf8(str){return decodeURIComponent(escape(atob(str)));}
+
+async function publishToGitHub(){
+  saveGhSettings();
+  const token=lsGet('greek_github_token');
+  const repo=(lsGet('greek_github_repo')||'').trim();
+  const path=(lsGet('greek_github_path')||'index.html').trim();
+  const status=document.getElementById('gh-status');
+  const btn=document.getElementById('gh-publish-btn');
+  status.className='gh-status';
+
+  if(!token||!repo){
+    status.className='gh-status err';
+    status.textContent='Заполни токен и репозиторий (раскрой настройки выше ⚙️).';
+    document.getElementById('gh-details').open=true;
+    return;
+  }
+  if(!customWords.length){
+    status.className='gh-status err';
+    status.textContent='Нет новых слов для публикации.';
+    return;
+  }
+
+  btn.disabled=true;
+  status.textContent='⏳ Получаю текущий файл с GitHub...';
+
+  try{
+    const apiUrl=`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`;
+    const headers={Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json'};
+
+    const getRes=await fetch(apiUrl,{headers});
+    if(!getRes.ok){
+      const errBody=await getRes.json().catch(()=>({}));
+      throw new Error(`Не удалось получить файл (${getRes.status}): ${errBody.message||getRes.statusText}`);
+    }
+    const fileData=await getRes.json();
+    const sha=fileData.sha;
+    const content=b64DecodeUtf8(fileData.content.replace(/\n/g,''));
+
+    const esc=s=>String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+    const newLines=customWords.map(w=>`["${esc(w[0])}","${esc(w[1])}","${esc(w[2])}","${esc(w[3]||'')}"],`).join('\n');
+    const marker='\n];\nconst SENTENCES=';
+    if(!content.includes(marker)){
+      throw new Error('Не нашёл место для вставки слов в файле на GitHub. Структура файла отличается.');
+    }
+    const updated=content.replace(marker,'\n'+newLines+marker);
+
+    status.textContent=`⏳ Публикую ${customWords.length} слов...`;
+
+    const putRes=await fetch(apiUrl,{
+      method:'PUT',
+      headers:{...headers,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        message:`Добавлено ${customWords.length} новых слов из приложения`,
+        content:b64EncodeUtf8(updated),
+        sha:sha
+      })
+    });
+    if(!putRes.ok){
+      const errBody=await putRes.json().catch(()=>({}));
+      throw new Error(`Не удалось сохранить файл (${putRes.status}): ${errBody.message||putRes.statusText}`);
+    }
+
+    const publishedCount=customWords.length;
+    customWords=[];
+    saveCustomWordsLS();
+    rebuildAllData();
+    renderCustomWordsList();
+
+    status.className='gh-status ok';
+    status.textContent=`✓ Опубликовано ${publishedCount} слов! GitHub Pages обновится в течение минуты.`;
+  }catch(e){
+    status.className='gh-status err';
+    status.textContent='Ошибка: '+e.message;
+  }finally{
+    btn.disabled=false;
+  }
+}
+
 function loadPersisted(){
   sheetsUrl=lsGet('greek_sheets_url')||'';
   updateSyncDot();
   try{wordStats=JSON.parse(lsGet('greek_word_stats')||'{}');}catch(e){wordStats={};}
+  loadCustomWords();
 }
 function saveWordStats(){lsSet('greek_word_stats',JSON.stringify(wordStats));}
 
@@ -1585,7 +1892,7 @@ function openStats(){
       sections[t].seen+=st.seen;
       sections[t].correct+=st.correct;
     });
-    const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','доп':'Слова от учит.','еда':'🍽️ Еда','предложения':'Предложения'};
+    const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','доп':'Слова от учит.','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','предложения':'Предложения'};
 
     const weak=entries
       .filter(([,v])=>v.seen>=2)
@@ -1642,7 +1949,7 @@ function clearStats(){
 }
 
 /* ── core app ── */
-function norm(s){return s.toLowerCase().replace(/ё/g,'е').replace(/[;,!?]/g,'').replace(/\s+/g,' ').trim();}
+function norm(s){return s.toLowerCase().replace(/ё/g,'е').replace(/[;,!?.…]/g,'').replace(/\s+/g,' ').trim();}
 function stripArt(s){return s.replace(/^(ο\/η|ο|η|το|οι|τα)\s+/i,'').trim();}
 function normFlex(s){return norm(stripArt(s));}
 function cardMode(w){return isSentence(w)?'ru-gr':mode;}
@@ -1722,13 +2029,16 @@ function applyFilter(){
   else if(f==='все_числа') deck=ALL_DATA.filter(w=>
     w[2].includes('числа')||w[2].includes('месяц')||w[2].includes('дни')
   );
-  else if(f==='все_глаголы') {
+  const NONVERB_EXCEPT=new Set(['εγώ','ευχαριστώ','παρακαλώ','δεκαοχτώ','εδώ','το ευρώ',
+    'έξω','κάτω','πάνω','ένα πεντάευρω','ένα δεκάευρω','ένα εικοσάευρω','ένα πενηντάευρω',
+    'αυτός εδώ','αυτή εδώ','αυτό εδώ']);
+  if(f==='все_глаголы') {
     const AB=['λέω','τρώω','ακούω','καίω','κλαίω','σπάω','φταίω','πλέω','πάω'];
-    deck=ALL_DATA.filter(w=>!isSentence(w)&&(/[άα]ω$|ώ$|ομαι$|[^ά]ω$/.test(w[0])||w[2].includes('глагол')||AB.includes(w[0]))&&!w[2].startsWith('еда'));
+    deck=ALL_DATA.filter(w=>!isSentence(w)&&(/[άα]ω$|ώ$|ομαι$|[^ά]ω$/.test(w[0])||w[2].includes('глагол')||AB.includes(w[0]))&&!w[2].startsWith('еда')&&!NONVERB_EXCEPT.has(w[0]));
   }
   else if(f==='глаголы_А') {
     const excl=['λέω','τρώω','ακούω','καίω','κλαίω','σπάω','φταίω','πλέω','πάω'];
-    deck=ALL_DATA.filter(w=>!isSentence(w)&&/[^ά]ω$/.test(w[0])&&!/άω$/.test(w[0])&&!/ώ$/.test(w[0])&&!/ομαι$/.test(w[0])&&!excl.includes(w[0]));
+    deck=ALL_DATA.filter(w=>!isSentence(w)&&/[^ά]ω$/.test(w[0])&&!/άω$/.test(w[0])&&!/ώ$/.test(w[0])&&!/ομαι$/.test(w[0])&&!excl.includes(w[0])&&!NONVERB_EXCEPT.has(w[0]));
   }
   else if(f==='глаголы_АВ') {
     const AB=['λέω','τρώω','ακούω','καίω','κλαίω','σπάω','φταίω','πλέω','πάω'];
@@ -1792,6 +2102,15 @@ function updateStats(){
   document.getElementById('s-bad').textContent=badCount;
   const sb=document.getElementById('streak-badge');
   sb.textContent=streak>=3?'🔥 '+streak+' подряд':'';
+}
+
+function showHint(){
+  if(checked) return;
+  const w=deck[idx];
+  const cm=cardMode(w);
+  const a=cm==='gr-ru'?w[1]:w[0];
+  const clean=a.replace(/\(.*?\)/g,'').trim();
+  document.getElementById('hint-box').innerHTML=`<div style="font-size:12px;color:var(--text3);margin-top:4px">💡 Начинается на: <strong>${clean.slice(0,2)}…</strong></div>`;
 }
 
 function checkWord(w){
@@ -1885,7 +2204,9 @@ function renderCard(){
     <div class="card-hint">${hint}</div>
     <div class="input-row">${inputEl}
       <button id="check-btn" onclick="handleCheck()">${isSent?'Показать':'Проверить'}</button>
+      ${(cm==='ru-gr'&&!isSent)?`<button id="hint-btn" onclick="showHint()" title="Подсказка" style="padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);cursor:pointer;font-size:16px">💡</button>`:''}
     </div>
+    <div id="hint-box"></div>
     <div id="feedback"></div>
   </div>
   <div class="bottom-bar">

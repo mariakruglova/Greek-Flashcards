@@ -2264,7 +2264,8 @@ function showHint(){
   const w=deck[idx];
   const cm=cardMode(w);
   const a=cm==='gr-ru'?w[1]:w[0];
-  const clean=a.replace(/\(.*?\)/g,'').trim();
+  let clean=a.replace(/\(.*?\)/g,'').trim();
+  if(cm==='ru-gr') clean=stripArt(clean);
   document.getElementById('hint-box').innerHTML=`<div style="font-size:12px;color:var(--text3);margin-top:4px">💡 Начинается на: <strong>${clean.slice(0,2)}…</strong></div>`;
 }
 
@@ -2283,7 +2284,8 @@ function checkWord(w){
     document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно!${w[3]&&w[3]!=='s'?` <span class="ex">${w[3]}</span>`:''}</div>`;
   } else {
     input.className='bad';
-    const hint=cm==='ru-gr'?`<span style="font-size:12px;color:var(--text3);margin-left:8px">💡 Начинается на: <strong>${a.slice(0,2)}…</strong></span>`:'';
+    const hintBase=cm==='ru-gr'?stripArt(a.replace(/\(.*?\)/g,'').trim()):a;
+    const hint=cm==='ru-gr'?`<span style="font-size:12px;color:var(--text3);margin-left:8px">💡 Начинается на: <strong>${hintBase.slice(0,2)}…</strong></span>`:'';
     document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильный ответ: <span class="correct-ans">${a}</span>${hint}${w[3]&&w[3]!=='s'?`<span class="ex">${w[3]}</span>`:''}</div>`;
   }
   document.getElementById('check-btn').textContent='Далее →';

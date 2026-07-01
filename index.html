@@ -1831,7 +1831,7 @@ const SENTENCES=[
 
 /* ── data plumbing ── */
 function isSentence(w){return w.length===4&&w[3]==='s'||w[2]==='предложения';}
-function tagOf(t){for(const p of['ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
+function tagOf(t){for(const p of['ен11','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
 const ALL_DATA=[...ALL.map(w=>[...w,'w']),...SENTENCES.map(w=>[...w,'s'])];
 const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','доп':'Слова от учит.','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','предложения':'Предложения'};
 
@@ -2219,15 +2219,15 @@ function openStats(){
     const learningCount=allWords.filter(w=>getStatus(w[0])==='learning').length;
     const newCount=allWords.filter(w=>getStatus(w[0])==='new').length;
 
-    // section accuracy
+    // section accuracy — build from ALL_DATA so unseen sections show as 0%
     const sections={};
     ALL_DATA.forEach(w=>{
+      if(isSentence(w)) return;
       const t=tagOf(w[2]);
+      if(!sections[t]) sections[t]={seen:0,correct:0,total:0};
+      sections[t].total++;
       const st=wordStats[w[0]];
-      if(!st) return;
-      if(!sections[t]) sections[t]={seen:0,correct:0};
-      sections[t].seen+=st.seen;
-      sections[t].correct+=st.correct;
+      if(st){sections[t].seen+=st.seen;sections[t].correct+=st.correct;}
     });
 
     const weak=entries
@@ -2250,13 +2250,17 @@ function openStats(){
           <div style="font-size:11px;color:var(--text3)">Не изучено</div>
         </div>
       </div>`;
+    // Show sections in a fixed order
+    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','доп','предложения'];
     let sectHtml='<div class="section-bars">';
-    for(const [tag,v] of Object.entries(sections)){
-      if(!v.seen) continue;
-      const pct=Math.round(v.correct/v.seen*100);
+    for(const tag of sectionOrder){
+      const v=sections[tag];
+      if(!v||!v.total) continue;
+      const pct=v.seen>0?Math.round(v.correct/v.seen*100):0;
+      const wordsLabel=v.seen>0?`${pct}%`:`0% <span style="font-size:10px;color:var(--text3)">(${v.total} сл.)</span>`;
       sectHtml+=`<div class="section-bar">
-        <div class="bar-label"><span>${sectionLabels[tag]||tag}</span><span>${pct}%</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="bar-label"><span>${sectionLabels[tag]||tag}</span><span>${wordsLabel}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;${v.seen===0?'background:var(--border2)':''}"></div></div>
       </div>`;
     }
     sectHtml+='</div>';

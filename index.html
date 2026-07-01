@@ -1760,6 +1760,20 @@ const ALL=[
 ["απαλός","мягкий / нежный","доп_прилагательные","Ο τόνος του χρώματος είναι απαλός."],
 ["ασπρόμαυρος","чёрно-белый","доп_прилагательные","Η φωτογραφία της ταυτότητας είναι μικρή και ασπρόμαυρη."],
 ["ξετρελαίνω","сводить с ума (от восторга)","доп_глаголы","Τα χρώματα του φθινοπώρου με ξετρελαίνουν."],
+["μακριά από","далеко от","доп_наречия","Το σπίτι μου είναι μακριά από το κέντρο."],
+["το τετραγωνικό μέτρο","квадратный метр","ен11_слова","Το διαμέρισμα είναι εξήντα πέντε τετραγωνικά μέτρα."],
+["η φιλοξενία","гостеприимство","доп_существительные","Η ελληνική φιλοξενία είναι γνωστή σε όλο τον κόσμο."],
+["η τιμή","цена / честь","доп_существительные","Πόση είναι η τιμή του ενοικίου;"],
+["η φωτιά","огонь / пожар","доп_существительные","Η φωτιά στο δάσος είναι πολύ επικίνδυνη."],
+["η Εθνική οδός","национальное шоссе","доп_существительные","Βρισκόμαστε στην Εθνική Οδό Αθηνών-Λαμίας."],
+["η Αθήνα","Афины","доп_существительные","Η Αθήνα είναι η πρωτεύουσα της Ελλάδας."],
+["τρομερός","ужасный / страшный","доп_прилагательные","Έχει τρομερό μποτιλιάρισμα στον δρόμο."],
+["το μποτιλιάρισμα","пробка (на дороге)","доп_существительные","Κάθε Κυριακή έχει τρομερό μποτιλιάρισμα στην Εθνική."],
+["η ουρά","очередь / хвост","доп_существительные","Η ουρά των αυτοκινήτων είναι μεγάλη."],
+["ο πανικός","паника","доп_существительные","Οι οδηγοί είναι σε πανικό."],
+["η πατρίδα","родина","доп_существительные","Θυμάμαι το σπίτι στην πατρίδα μου με νοσταλγία."],
+["ο φόβος","страх","доп_существительные","Φοβάμαι τα φίδια — αυτός είναι ο μεγαλύτερος φόβος μου."],
+["παράξενος","странный","доп_прилагательные","Ακούγεται ένας παράξενος θόρυβος στο ασανσέρ."],
 ];
 const SENTENCES=[
 ["Γεια σου! Από 'δω η Βέρα.","Привет! Это Вера.","предложения"],
@@ -2200,6 +2214,10 @@ function openStats(){
     const total=entries.reduce((s,[,v])=>s+v.seen,0);
     const totalOk=entries.reduce((s,[,v])=>s+v.correct,0);
     const acc=total?Math.round(totalOk/total*100):0;
+    const allWords=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда'));
+    const learnedCount=allWords.filter(w=>getStatus(w[0])==='learned').length;
+    const learningCount=allWords.filter(w=>getStatus(w[0])==='learning').length;
+    const newCount=allWords.filter(w=>getStatus(w[0])==='new').length;
 
     // section accuracy
     const sections={};
@@ -2217,6 +2235,21 @@ function openStats(){
       .sort(([,a],[,b])=>(a.correct/a.seen)-(b.correct/b.seen))
       .slice(0,10);
 
+    let summaryHtml=`
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
+          <div style="font-size:22px;font-weight:700;color:var(--green,#5a5)">${learnedCount}</div>
+          <div style="font-size:11px;color:var(--text3)">Выучено</div>
+        </div>
+        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
+          <div style="font-size:22px;font-weight:700;color:var(--blue,#4a9)">${learningCount}</div>
+          <div style="font-size:11px;color:var(--text3)">Учу</div>
+        </div>
+        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
+          <div style="font-size:22px;font-weight:700;color:var(--text2)">${newCount}</div>
+          <div style="font-size:11px;color:var(--text3)">Не изучено</div>
+        </div>
+      </div>`;
     let sectHtml='<div class="section-bars">';
     for(const [tag,v] of Object.entries(sections)){
       if(!v.seen) continue;
@@ -2239,7 +2272,7 @@ function openStats(){
       weakHtml+='</ul>';
     }
 
-    el.innerHTML=`
+    el.innerHTML=summaryHtml+`
       <div class="stats-grid">
         <div class="stat-card"><div class="label">Всего ответов</div><div class="value">${total}</div></div>
         <div class="stat-card"><div class="label">Точность</div><div class="value" style="color:${acc>=70?'var(--green)':'var(--red)'}">${acc}%</div></div>

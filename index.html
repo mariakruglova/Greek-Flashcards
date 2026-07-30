@@ -57,6 +57,9 @@ select{font-size:13px;padding:6px 10px;border:0.5px solid var(--border2);border-
 #answer-input:focus{box-shadow:0 0 0 2px rgba(0,0,0,0.06)}
 #answer-input.ok{border-color:var(--green-border)}
 #answer-input.bad{border-color:var(--red-border)}
+#answer-input.close{border-color:#d4a017}
+.feedback.close{background:#fdf6e3;color:#9a7b0a;border:0.5px solid #e6c34a}
+.feedback.close .diff-hl{background:#f5d76e;color:#000;padding:0 2px;border-radius:2px;font-weight:600}
 #check-btn{padding:8px 18px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;font-size:14px;white-space:nowrap;transition:all .15s}
 #check-btn:hover{background:var(--bg2)}
 .feedback{font-size:14px;padding:10px 14px;border-radius:var(--r);line-height:1.5}
@@ -145,7 +148,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
   <h1>Ελληνικά Α&#39; — <em>флэшкарты</em></h1>
   <div class="top-bar">
     <button class="mode-btn active" id="btn-gr-ru" onclick="setMode('gr-ru')">Греч → Рус</button>
-    <button class="mode-btn" id="btn-ru-gr" onclick="setMode('ru-gr')">Рус → Греч</button>
+    <button class="mode-btn" id="btn-ru-gr" onclick="setMode('ru-gr')">✍️ Рус → Греч</button>
     <select id="tag-filter" onchange="applyFilter()">
       <option value="all">Все разделы</option>
       <option value="words">Только слова</option>
@@ -1956,6 +1959,25 @@ const ALL=[
 ["αυτόνομος","автономный","доп_прилагательные","Το σπίτι έχει αυτόνομη θέρμανση."],
 ["το φανάρι","светофор","доп_существительные","Όταν το φανάρι είναι κόκκινο, σταματάω."],
 ["πάνω μου","при себе / на мне","доп_выражения","Δεν έχω λεφτά πάνω μου."],
+["το σκυλί","собака (= ο σκύλος)","доп_существительные","Ο Αποστόλης βγαίνει βόλτα με τα σκυλιά του."],
+["νομίζω","думать / полагать","доп_глаголы","Νομίζω ότι έχεις δίκιο."],
+["ότι","что (союз)","доп_выражения","Νομίζω ότι το φόρεμα είναι πιο κοντό."],
+["κάνω φασαρία","шуметь","доп_выражения","Τα παιδιά κάνουν φασαρία στα διαλείμματα."],
+["το χιλιόμετρο","километр","доп_существительные","Πόσα χιλιόμετρα τρέχεις κάθε πρωί;"],
+["το αφεντικό","начальник / босс","доп_существительные","Το αφεντικό μου δε με πληρώνει καλά."],
+["το σκάκι","шахматы","доп_существительные","Παίζουμε σκάκι μαζί;"],
+["ανάποδα","наоборот / задом наперёд","доп_наречия","Στην Κύπρο οδηγούν ανάποδα."],
+["μεταχειρισμένος","подержанный / б/у","доп_прилагательные","Αγοράζουν ρούχα μεταχειρισμένα."],
+["το δημαρχείο","мэрия / ратуша","доп_существительные","Δουλεύει στο δημαρχείο."],
+["μετακομίζω","переезжать","доп_глаголы","Μετακομίζουν στη Γαλλία και νοικιάζουν το σπίτι τους."],
+["πώς και","как так / с чего вдруг","доп_выражения","Πώς και είσαι εδώ τέτοια ώρα;"],
+["το ιατρείο","кабинет врача","доп_существительные","Το ιατρείο του είναι ανάμεσα σε έναν φούρνο και ένα φαρμακείο."],
+["ο τοίχος","стена","доп_существительные","Η φωτογραφία του γιου μου είναι στον τοίχο."],
+["το ντουλάπι","шкафчик (кухонный)","доп_существительные","Τα ντουλάπια της κουζίνας μας είναι πράσινα."],
+["ο ταξιτζής","таксист","доп_существительные","Ο πατέρας μου είναι ταξιτζής."],
+["ταξιδεύω","путешествовать","доп_глаголы","Η Μαρία ταξιδεύει πολύ."],
+["καλώς ήρθες","добро пожаловать","доп_выражения","Καλημέρα! Καλώς ήρθες!"],
+["η Κίνα","Китай","доп_существительные","Θέλω να πάω στην Κίνα μια μέρα."],
 ];
 const SENTENCES=[
 ["Γεια σου! Από 'δω η Βέρα.","Привет! Это Вера.","предложения"],
@@ -2400,6 +2422,7 @@ function openStats(){
     const learnedCount=allWords.filter(w=>getStatus(w[0])==='learned').length;
     const learningCount=allWords.filter(w=>getStatus(w[0])==='learning').length;
     const newCount=allWords.filter(w=>getStatus(w[0])==='new').length;
+    const writeCount=allWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
 
     // section accuracy — build from ALL_DATA so unseen sections show as 0%
     const sections={};
@@ -2431,6 +2454,10 @@ function openStats(){
           <div style="font-size:22px;font-weight:700;color:var(--text2)">${newCount}</div>
           <div style="font-size:11px;color:var(--text3)">Не изучено</div>
         </div>
+        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
+          <div style="font-size:22px;font-weight:700;color:#d4a017">${writeCount}</div>
+          <div style="font-size:11px;color:var(--text3)">✍️ Умею писать</div>
+        </div>
       </div>`;
     // Show sections in a fixed order
     const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','клик1','клик2','доп','предложения'];
@@ -2439,7 +2466,11 @@ function openStats(){
       const v=sections[tag];
       if(!v||!v.total) continue;
       const pct=v.seen>0?Math.round(v.correct/v.seen*100):0;
-      const wordsLabel=v.seen>0?`${pct}%`:`0% <span style="font-size:10px;color:var(--text3)">(${v.total} сл.)</span>`;
+      // writing-mastered count for this section
+      const secWords=ALL_DATA.filter(w=>tagOf(w[2])===tag&&!isSentence(w));
+      const wMastered=secWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
+      const wLabel=wMastered>0?` <span style="font-size:10px;color:#d4a017">✍️${wMastered}</span>`:'';
+      const wordsLabel=v.seen>0?`${pct}%${wLabel}`:`0% <span style="font-size:10px;color:var(--text3)">(${v.total} сл.)</span>`;
       sectHtml+=`<div class="section-bar">
         <div class="bar-label"><span>${sectionLabels[tag]||tag}</span><span>${wordsLabel}</span></div>
         <div class="bar-track"><div class="bar-fill" style="width:${pct}%;${v.seen===0?'background:var(--border2)':''}"></div></div>
@@ -2503,6 +2534,25 @@ function isWeak(key){
   const s=wordStats[key];
   return s&&s.seen>=3&&(s.correct/s.seen)<0.7;
 }
+/* ── writing (RU→GR spelling) progress: independent of recognition SRS ── */
+function recordWriting(key,correct){
+  if(!wordStats[key]) wordStats[key]={seen:0,correct:0,sessions:0,lastDay:''};
+  const s=wordStats[key];
+  if(!s.wSeen){s.wSeen=0;s.wCorrect=0;s.wSessions=0;s.wLastDay='';}
+  s.wSeen++;
+  if(correct){
+    s.wCorrect++;
+    const today=new Date().toDateString();
+    if(s.wLastDay!==today){s.wSessions=(s.wSessions||0)+1;s.wLastDay=today;}
+  }
+  saveWordStats();
+}
+function getWriteStatus(key){
+  const s=wordStats[key];
+  if(!s||!s.wSeen) return 'new';
+  if(s.wCorrect>=5&&(s.wSessions||0)>=2&&(s.wCorrect/s.wSeen)>=0.7) return 'mastered';
+  return 'learning';
+}
 
 /* ── answer variants helper (supports "a / b (note)" → ["a","b"]) ── */
 function matchAnswer(userVal,answer){
@@ -2522,6 +2572,64 @@ function matchAnswer(userVal,answer){
   const variants=[...new Set(allForms.map(f=>norm(f)).filter(Boolean))];
   const allVariants=[...new Set([...variants,...variants.map(v=>norm(stripPron(v)))])];
   return allVariants.some(v=>u===v)||normFlex(u)===normFlex(norm(answer));
+}
+
+/* ── graded writing check (RU→GR): distinguishes exact / close / wrong ── */
+const GREEK_ART=/^(ο\/η|ο|η|το|οι|τα)\s+/i;
+function stripAccents(s){return s.normalize('NFD').replace(/[\u0300-\u0301\u0342\u0344\u0345]/g,'').normalize('NFC');}
+function artOf(s){const m=s.trim().match(GREEK_ART);return m?m[1].toLowerCase():null;}
+function evalWriting(userVal,answer){
+  // Returns {level:'exact'|'close'|'wrong', accentOnly, userArt, correctArt, target}
+  // Build candidate greek forms from the answer (handle slash-synonyms, notes, parens)
+  const stripNote=s=>s.replace(/\s*[—–-]\s*(муж|жен|ср|разг|формал|вежл|неформ|тип|Тип|м\.р|ж\.р|с\.р)[^/]*/gi,'').trim();
+  const parts=answer.split(/\s*\/\s*/);
+  const cands=[];
+  for(const p of[answer,...parts]){
+    const noNote=stripNote(p);
+    cands.push(noNote,noNote.replace(/\(.*?\)/g,'').trim());
+  }
+  const targets=[...new Set(cands.map(s=>s.trim()).filter(Boolean))];
+  const uRaw=userVal.trim();
+  const uArt=artOf(uRaw);
+  const uCore=uRaw.replace(GREEK_ART,'').trim().toLowerCase();
+  const uCoreNA=stripAccents(uCore);
+  let best={level:'wrong'};
+  for(const t of targets){
+    const cArt=artOf(t);
+    const cCore=t.replace(GREEK_ART,'').trim().toLowerCase();
+    const cCoreNA=stripAccents(cCore);
+    if(uCore===cCore){
+      // core letters+accents identical
+      return {level:'exact',accentOnly:false,userArt:uArt,correctArt:cArt,target:t};
+    }
+    if(uCoreNA===cCoreNA){
+      // same letters, accents differ → close (accent slip)
+      best={level:'close',accentOnly:true,userArt:uArt,correctArt:cArt,target:t};
+    } else if(best.level==='wrong'){
+      // check near-miss: single-letter typo (edit distance 1) on accent-stripped
+      if(editDist1(uCoreNA,cCoreNA)){
+        best={level:'close',accentOnly:false,userArt:uArt,correctArt:cArt,target:t};
+      } else {
+        best.target=best.target||t; best.correctArt=cArt;
+      }
+    }
+  }
+  if(best.target==null) best.target=targets[0];
+  return best;
+}
+function editDist1(a,b){
+  // true if a and b differ by exactly one insertion, deletion or substitution
+  if(a===b) return false;
+  const la=a.length,lb=b.length;
+  if(Math.abs(la-lb)>1) return false;
+  if(la===lb){ // substitution
+    let d=0; for(let i=0;i<la;i++){if(a[i]!==b[i])d++; if(d>1)return false;} return d===1;
+  }
+  // insertion/deletion
+  const s=la<lb?a:b, l=la<lb?b:a;
+  let i=0,j=0,skips=0;
+  while(i<s.length&&j<l.length){ if(s[i]===l[j]){i++;j++;} else {j++;skips++; if(skips>1)return false;} }
+  return true;
 }
 
 /* ── update overall progress bar ── */
@@ -2662,16 +2770,44 @@ function checkWord(w){
   const input=document.getElementById('answer-input');
   const userVal=input.value.trim();
   if(!userVal) return;
+  const ex=w[3]&&w[3]!=='s'?`<span class="ex">${w[3]}</span>`:'';
+
+  if(cm==='ru-gr'){
+    // WRITING MODE: graded, soft-scoring, records to writing counter
+    const r=evalWriting(userVal,a);
+    // article feedback (bonus, never penalises)
+    let artMsg='';
+    if(r.userArt){
+      if(r.correctArt&&r.userArt===r.correctArt) artMsg=` <span style="color:var(--green);font-size:12px">✓ артикль верный</span>`;
+      else if(r.correctArt) artMsg=` <span style="color:#9a7b0a;font-size:12px">род: правильно <strong>${r.correctArt} ${r.target.replace(GREEK_ART,'')}</strong></span>`;
+    }
+    if(r.level==='exact'){
+      recordWriting(w[0],true); recordResult(w,true);
+      input.className='ok';
+      document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно!${artMsg}${ex}</div>`;
+    } else if(r.level==='close'){
+      recordWriting(w[0],true); recordResult(w,true); // soft: counts as correct
+      input.className='close';
+      const why=r.accentOnly?'почти — следи за ударением':'почти — маленькая опечатка';
+      document.getElementById('feedback').innerHTML=`<div class="feedback close">${why}. Правильно: <span class="correct-ans">${a}</span>${artMsg}${ex}</div>`;
+    } else {
+      recordWriting(w[0],false); recordResult(w,false);
+      input.className='bad';
+      document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильный ответ: <span class="correct-ans">${a}</span>${ex}</div>`;
+    }
+    document.getElementById('check-btn').textContent='Далее →';
+    return;
+  }
+
+  // RECOGNITION MODE (gr-ru): unchanged
   const correct=matchAnswer(userVal,a);
   recordResult(w,correct);
   if(correct){
     input.className='ok';
-    document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно!${w[3]&&w[3]!=='s'?` <span class="ex">${w[3]}</span>`:''}</div>`;
+    document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно!${ex}</div>`;
   } else {
     input.className='bad';
-    const hintBase=cm==='ru-gr'?stripArt(a.replace(/\(.*?\)/g,'').trim()):a;
-    const hint=cm==='ru-gr'?`<span style="font-size:12px;color:var(--text3);margin-left:8px">💡 Начинается на: <strong>${hintBase.slice(0,2)}…</strong></span>`:'';
-    document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильный ответ: <span class="correct-ans">${a}</span>${hint}${w[3]&&w[3]!=='s'?`<span class="ex">${w[3]}</span>`:''}</div>`;
+    document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильный ответ: <span class="correct-ans">${a}</span>${ex}</div>`;
   }
   document.getElementById('check-btn').textContent='Далее →';
 }
@@ -2775,10 +2911,18 @@ function renderDone(){
   const sheetLink=sheetsUrl?`<a class="icon-btn" href="${sheetsUrl.replace('/exec','')}" target="_blank" style="text-decoration:none">📊 Открыть таблицу</a>`:'';
   const learnedNow=deck.filter(w=>getStatus(w[0])==='learned').length;
   const learnedTotal=ALL_DATA.filter(w=>getStatus(w[0])==='learned').length;
+  // writing-mode summary line
+  const isWriting=(mode==='ru-gr');
+  const writeTotal=ALL_DATA.filter(w=>!isSentence(w)&&getWriteStatus(w[0])==='mastered').length;
+  const deckWords=deck.filter(w=>!isSentence(w));
+  const deckWriteMastered=deckWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
+  const writeLine=isWriting
+    ? `<p style="font-size:13px;color:#d4a017;margin-top:4px">✍️ Умею писать: <strong>${deckWriteMastered}</strong> из <strong>${deckWords.length}</strong> в разделе · <strong>${writeTotal}</strong> всего</p>`
+    : `<p style="font-size:13px;color:var(--green);margin-top:4px">✓ Выучено всего: <strong>${learnedTotal}</strong> слов</p>`;
   document.getElementById('main').innerHTML=`<div class="done-box">
     <h2>Готово!</h2>
     <p>Верно: <strong>${okCount}</strong> из <strong>${total}</strong> (${pct}%)</p>
-    <p style="font-size:13px;color:var(--green);margin-top:4px">✓ Выучено всего: <strong>${learnedTotal}</strong> слов</p>
+    ${writeLine}
     <p style="font-size:13px;color:var(--text2);margin-top:2px">📅 Сегодня пройдено: <strong>${parseInt(localStorage.getItem('greek_today_'+new Date().toDateString())||'0')}</strong> карточек</p>
     <div class="btn-row" style="margin-top:1.2rem">
       <button onclick="restart()">Пройти снова</button>

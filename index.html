@@ -198,6 +198,11 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <option value="100">100</option>
     </select>
     <span id="deck-count-label" style="color:var(--text3);font-size:12px"></span>
+    <select id="priority-select" onchange="applyFilter()" style="margin-left:auto;font-size:12px;padding:3px 8px;border-radius:8px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border2)">
+      <option value="new-first" selected>🆕 Сначала новые</option>
+      <option value="hide-known">🙈 Скрыть освоенные</option>
+      <option value="all">🔀 Все подряд</option>
+    </select>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">
     <div class="stats">
@@ -1978,6 +1983,25 @@ const ALL=[
 ["ταξιδεύω","путешествовать","доп_глаголы","Η Μαρία ταξιδεύει πολύ."],
 ["καλώς ήρθες","добро пожаловать","доп_выражения","Καλημέρα! Καλώς ήρθες!"],
 ["η Κίνα","Китай","доп_существительные","Θέλω να πάω στην Κίνα μια μέρα."],
+["φαντάζομαι","воображать / представлять","доп_глаголы","Φανταζόμαστε πράγματα που δε γίνονται."],
+["φτιάχνομαι","прихорашиваться / изготавливаться","доп_глаголы","Αυτή η μηχανή δε φτιάχνεται."],
+["κλείνομαι","запираться / закрываться","доп_глаголы","Εσείς κλείνεστε στο δωμάτιό σας και διαβάζετε."],
+["χτίζομαι","строиться","доп_глаголы","Η μονοκατοικία χτίζεται εδώ και δύο χρόνια."],
+["ψήνομαι","печься / жариться; загорать","доп_глаголы","Στις διακοπές ψηνόμαστε στον ήλιο όλη μέρα."],
+["μαγειρεύομαι","готовиться (о еде)","доп_глаголы","Το κρέας μαγειρεύεται στην κατσαρόλα."],
+["βιάζομαι","торопиться / спешить","доп_глаголы","Παιδιά, γιατί βιάζεστε;"],
+["βολεύομαι","устраиваться (поудобнее)","доп_глаголы","Δε βολεύεται στην πολυθρόνα, προτιμάει τον καναπέ."],
+["ντρέπομαι","стесняться / стыдиться","доп_глаголы","Ο μικρός ντρέπεται όταν τον κοιτάς."],
+["ανοίγομαι","открываться","доп_глаголы","Ένα καινούργιο κεφάλαιο ανοίγεται σήμερα."],
+["διαβάζομαι","читаться","доп_глаголы","Τα γράμματά σου δε διαβάζονται."],
+["τρώγομαι","быть съедобным / есться","доп_глаголы","Το καρπούζι δεν τρώγεται ζεστό."],
+["βάφομαι","краситься (макияж)","доп_глаголы","Εσύ δε βάφεσαι καθόλου;"],
+["ο γάμος","свадьба / брак","доп_существительные","Ετοιμάζονται για τον γάμο του εγγονού τους."],
+["η κατσαρίδα","таракан","доп_существительные","Εσείς, παιδιά, φοβάστε τις κατσαρίδες;"],
+["το κεφάλαιο","глава / капитал","доп_существительные","Ένα καινούργιο κεφάλαιο ανοίγεται σήμερα."],
+["ο καημένος","бедняга / бедняжка","доп_существительные","Εσύ δεν τον λυπάσαι τον καημένο;"],
+["σύντομα","скоро / вскоре","доп_наречия","Αυτοί παντρεύονται πολύ σύντομα."],
+["φτηνά","дёшево","доп_наречия","Τα κάτω διαμερίσματα ενοικιάζονται πολύ φτηνά."],
 ];
 const SENTENCES=[
 ["Γεια σου! Από 'δω η Βέρα.","Привет! Это Вера.","предложения"],
@@ -2338,17 +2362,19 @@ function syncToSheets(greek,translation,tag,cardMode,correct){
 }
 
 /* ── record result ── */
-function recordResult(w,correct){
+function recordResult(w,correct,trackSRS=true){
   const key=w[0];
-  if(!wordStats[key]) wordStats[key]={seen:0,correct:0,sessions:0,lastDay:''};
-  const s=wordStats[key];
-  s.seen++;
-  if(correct){
-    s.correct++;
-    const today=new Date().toDateString();
-    if(s.lastDay!==today){s.sessions=(s.sessions||0)+1;s.lastDay=today;}
+  if(trackSRS){
+    if(!wordStats[key]) wordStats[key]={seen:0,correct:0,sessions:0,lastDay:''};
+    const s=wordStats[key];
+    s.seen++;
+    if(correct){
+      s.correct++;
+      const today=new Date().toDateString();
+      if(s.lastDay!==today){s.sessions=(s.sessions||0)+1;s.lastDay=today;}
+    }
+    saveWordStats();
   }
-  saveWordStats();
   // Track today's count
   const todayKey='greek_today_'+new Date().toDateString();
   const prev=parseInt(localStorage.getItem(todayKey)||'0');
@@ -2419,10 +2445,13 @@ function openStats(){
     const totalOk=entries.reduce((s,[,v])=>s+v.correct,0);
     const acc=total?Math.round(totalOk/total*100):0;
     const allWords=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда'));
-    const learnedCount=allWords.filter(w=>getStatus(w[0])==='learned').length;
-    const learningCount=allWords.filter(w=>getStatus(w[0])==='learning').length;
-    const newCount=allWords.filter(w=>getStatus(w[0])==='new').length;
-    const writeCount=allWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
+    const knowCount=allWords.filter(w=>getStatus(w[0])==='learned').length;      // знаю перевод
+    const writeCount=allWords.filter(w=>getWriteStatus(w[0])==='mastered').length; // умею писать
+    const fullCount=allWords.filter(w=>getFullStatus(w[0])==='full').length;      // выучено (оба)
+    const newCount=allWords.filter(w=>getFullStatus(w[0])==='new').length;        // не тронуто вообще
+    // sentences tracked separately (recognition only)
+    const allSents=ALL_DATA.filter(w=>isSentence(w));
+    const sentKnown=allSents.filter(w=>getStatus(w[0])==='learned').length;
 
     // section accuracy — build from ALL_DATA so unseen sections show as 0%
     const sections={};
@@ -2441,23 +2470,26 @@ function openStats(){
       .slice(0,10);
 
     let summaryHtml=`
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
-          <div style="font-size:22px;font-weight:700;color:var(--green,#5a5)">${learnedCount}</div>
-          <div style="font-size:11px;color:var(--text3)">Выучено</div>
-        </div>
-        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
-          <div style="font-size:22px;font-weight:700;color:var(--blue,#4a9)">${learningCount}</div>
-          <div style="font-size:11px;color:var(--text3)">Учу</div>
-        </div>
-        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
-          <div style="font-size:22px;font-weight:700;color:var(--text2)">${newCount}</div>
-          <div style="font-size:11px;color:var(--text3)">Не изучено</div>
+          <div style="font-size:22px;font-weight:700;color:var(--green,#5a5)">${knowCount}</div>
+          <div style="font-size:11px;color:var(--text3)">Знаю перевод</div>
         </div>
         <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
           <div style="font-size:22px;font-weight:700;color:#d4a017">${writeCount}</div>
           <div style="font-size:11px;color:var(--text3)">✍️ Умею писать</div>
         </div>
+        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:1px solid var(--green,#5a5)">
+          <div style="font-size:22px;font-weight:700;color:var(--green,#5a5)">✓${fullCount}</div>
+          <div style="font-size:11px;color:var(--text3)">Выучено</div>
+        </div>
+        <div style="flex:1;min-width:80px;background:var(--bg2);border-radius:var(--r);padding:10px 14px;text-align:center;border:0.5px solid var(--border2)">
+          <div style="font-size:22px;font-weight:700;color:var(--text2)">${newCount}</div>
+          <div style="font-size:11px;color:var(--text3)">Не начато</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:1rem;padding:0 2px">
+        📝 Предложения (узнавание): <strong style="color:var(--text2)">${sentKnown} / ${allSents.length}</strong> — считаются отдельно
       </div>`;
     // Show sections in a fixed order
     const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','клик1','клик2','доп','предложения'];
@@ -2553,6 +2585,24 @@ function getWriteStatus(key){
   if(s.wCorrect>=5&&(s.wSessions||0)>=2&&(s.wCorrect/s.wSeen)>=0.7) return 'mastered';
   return 'learning';
 }
+/* ── combined three-tier status ──
+   getStatus()=='learned'  → знаю перевод (recognition passed)
+   getWriteStatus()=='mastered' → умею писать (spelling passed)
+   both → truly ВЫУЧЕНО. Returns 'know' | 'write' | 'full' | 'partial' | 'new' */
+function getFullStatus(key){
+  const knows=getStatus(key)==='learned';
+  const writes=getWriteStatus(key)==='mastered';
+  if(knows&&writes) return 'full';       // выучено
+  if(knows) return 'know';               // знаю перевод только
+  if(writes) return 'write';             // умею писать только (редко)
+  const s=wordStats[key];
+  if(s&&(s.seen>0||s.wSeen>0)) return 'partial';
+  return 'new';
+}
+/* Is a word "mastered" for the CURRENT mode? Used by "Сначала новые" ordering. */
+function isMasteredForMode(key,m){
+  return m==='ru-gr' ? getWriteStatus(key)==='mastered' : getStatus(key)==='learned';
+}
 
 /* ── answer variants helper (supports "a / b (note)" → ["a","b"]) ── */
 function matchAnswer(userVal,answer){
@@ -2632,17 +2682,19 @@ function editDist1(a,b){
   return true;
 }
 
-/* ── update overall progress bar ── */
+/* ── update overall progress bar (three-tier) ── */
 function updateProgress(){
   const words=ALL_DATA.filter(w=>!isSentence(w));
-  const learned=words.filter(w=>getStatus(w[0])==='learned').length;
-  const pct=words.length?Math.round(learned/words.length*100):0;
+  const know=words.filter(w=>getStatus(w[0])==='learned').length;   // знаю перевод
+  const write=words.filter(w=>getWriteStatus(w[0])==='mastered').length; // умею писать
+  const full=words.filter(w=>getFullStatus(w[0])==='full').length;  // выучено (оба)
+  const pct=words.length?Math.round(know/words.length*100):0;
   const fill=document.getElementById('prog-fill');
   const label=document.getElementById('prog-label');
   const count=document.getElementById('prog-count');
   if(fill) fill.style.width=pct+'%';
-  if(label) label.textContent='Выучено';
-  if(count) count.textContent=learned+' / '+words.length+' ('+pct+'%)';
+  if(label) label.innerHTML=`Знаю перевод`;
+  if(count) count.innerHTML=`<span style="color:var(--green)">${know} знаю</span> · <span style="color:#d4a017">✍️${write}</span> · <span style="color:var(--text2)">✓${full} выучено</span> <span style="color:var(--text3)">/ ${words.length}</span>`;
   updateDropdownPct();
 }
 
@@ -2714,23 +2766,39 @@ function applyFilter(){
     deck=ALL_DATA.filter(w=>!isSentence(w)&&PARONYMS.has(w[0]));
   }
   else deck=ALL_DATA.filter(w=>w[2]===f||w[2].startsWith(f+'_')||tagOf(w[2])===f);
-  // Sort: weak/new first, then learned last
-  deck.sort((a,b)=>{
-    const sa=getStatus(a[0]),sb=getStatus(b[0]);
-    const order={'new':0,'learning':1,'learned':2};
-    return (order[sa]||0)-(order[sb]||0);
-  });
-  // Shuffle within same status groups
-  const groups={'new':[],'learning':[],'learned':[]};
-  deck.forEach(w=>groups[getStatus(w[0])].push(w));
-  Object.values(groups).forEach(g=>shuffle(g));
-  deck=[...groups.new,...groups.learning,...groups.learned];
-  // Session limit: new/learning first, pad with learned
+
+  // ── Priority ordering (mode-aware): "mastered for current mode" defined by active mode ──
+  const prio=document.getElementById('priority-select')?.value||'new-first';
+  const isMast=w=>isMasteredForMode(w[0],mode);       // mastered in the mode we're studying
+  const rank=w=>{ // 0=new(this mode), 1=in progress, 2=mastered(this mode)
+    if(isMast(w)) return 2;
+    const s=wordStats[w[0]];
+    const touched = mode==='ru-gr' ? (s&&s.wSeen>0) : (s&&s.seen>0);
+    return touched?1:0;
+  };
+  if(prio==='hide-known'){
+    // drop words already mastered for this mode (keep at least something if all mastered)
+    const kept=deck.filter(w=>!isMast(w));
+    if(kept.length>0) deck=kept;
+  }
+  if(prio==='all'){
+    shuffle(deck);
+  } else {
+    // new-first (and hide-known remainder): sort by rank, shuffle within groups
+    const g={0:[],1:[],2:[]};
+    deck.forEach(w=>g[rank(w)].push(w));
+    [g[0],g[1],g[2]].forEach(shuffle);
+    deck=[...g[0],...g[1],...g[2]];
+  }
+  // Session limit: priority items first, pad with mastered
   const lim=parseInt(document.getElementById("limit-select")?.value||"0");
   if(lim>0&&deck.length>lim){
-    const pri=deck.filter(w=>getStatus(w[0])!=="learned");
-    const lrn=deck.filter(w=>getStatus(w[0])==="learned");
-    deck=[...pri.slice(0,lim),...lrn.slice(0,Math.max(0,lim-pri.length))].slice(0,lim);
+    if(prio==='all'){ deck=deck.slice(0,lim); }
+    else {
+      const pri=deck.filter(w=>!isMast(w));
+      const done=deck.filter(w=>isMast(w));
+      deck=[...pri.slice(0,lim),...done.slice(0,Math.max(0,lim-pri.length))].slice(0,lim);
+    }
   }
   const lbl=document.getElementById("deck-count-label");
   if(lbl) lbl.textContent=deck.length+" карт.";
@@ -2742,8 +2810,7 @@ function setMode(m){
   mode=m;
   document.getElementById('btn-gr-ru').className='mode-btn'+(m==='gr-ru'?' active':'');
   document.getElementById('btn-ru-gr').className='mode-btn'+(m==='ru-gr'?' active':'');
-  shuffle(deck);idx=0;okCount=0;badCount=0;streak=0;checked=false;
-  updateStats();renderCard();
+  applyFilter(); // rebuild deck: "new-first" priority is mode-dependent
 }
 function updateStats(){
   document.getElementById('s-ok').textContent=okCount;
@@ -2782,16 +2849,16 @@ function checkWord(w){
       else if(r.correctArt) artMsg=` <span style="color:#9a7b0a;font-size:12px">род: правильно <strong>${r.correctArt} ${r.target.replace(GREEK_ART,'')}</strong></span>`;
     }
     if(r.level==='exact'){
-      recordWriting(w[0],true); recordResult(w,true);
+      recordWriting(w[0],true); recordResult(w,true,false); // writing counter + session UI, NOT learned-SRS
       input.className='ok';
       document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно!${artMsg}${ex}</div>`;
     } else if(r.level==='close'){
-      recordWriting(w[0],true); recordResult(w,true); // soft: counts as correct
+      recordWriting(w[0],true); recordResult(w,true,false); // soft: counts as correct
       input.className='close';
       const why=r.accentOnly?'почти — следи за ударением':'почти — маленькая опечатка';
       document.getElementById('feedback').innerHTML=`<div class="feedback close">${why}. Правильно: <span class="correct-ans">${a}</span>${artMsg}${ex}</div>`;
     } else {
-      recordWriting(w[0],false); recordResult(w,false);
+      recordWriting(w[0],false); recordResult(w,false,false);
       input.className='bad';
       document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильный ответ: <span class="correct-ans">${a}</span>${ex}</div>`;
     }
@@ -2916,9 +2983,11 @@ function renderDone(){
   const writeTotal=ALL_DATA.filter(w=>!isSentence(w)&&getWriteStatus(w[0])==='mastered').length;
   const deckWords=deck.filter(w=>!isSentence(w));
   const deckWriteMastered=deckWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
+  const knowTotal=ALL_DATA.filter(w=>!isSentence(w)&&getStatus(w[0])==='learned').length;
+  const fullTotal=ALL_DATA.filter(w=>!isSentence(w)&&getFullStatus(w[0])==='full').length;
   const writeLine=isWriting
     ? `<p style="font-size:13px;color:#d4a017;margin-top:4px">✍️ Умею писать: <strong>${deckWriteMastered}</strong> из <strong>${deckWords.length}</strong> в разделе · <strong>${writeTotal}</strong> всего</p>`
-    : `<p style="font-size:13px;color:var(--green);margin-top:4px">✓ Выучено всего: <strong>${learnedTotal}</strong> слов</p>`;
+    : `<p style="font-size:13px;color:var(--green);margin-top:4px">Знаю перевод: <strong>${knowTotal}</strong> · ✓ Выучено (оба): <strong>${fullTotal}</strong></p>`;
   document.getElementById('main').innerHTML=`<div class="done-box">
     <h2>Готово!</h2>
     <p>Верно: <strong>${okCount}</strong> из <strong>${total}</strong> (${pct}%)</p>

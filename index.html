@@ -113,8 +113,11 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
   .status-learning{background:#451a03;color:#fde68a}
 }
 .prog-row{display:flex;align-items:center;gap:10px;margin-bottom:1rem;font-size:12px;color:var(--text3)}
-.prog-track{flex:1;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
-.prog-fill{height:100%;border-radius:3px;background:#22c55e;transition:width .4s}
+.prog-track{flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;display:flex}
+.prog-seg{height:100%;transition:width .4s}
+.prog-seg.full{background:#15803d}
+.prog-seg.write{background:#eab308}
+.prog-seg.know{background:#86efac}
 .filter-opt-pct{color:var(--text3);font-size:11px}
 .limit-bar{display:flex;align-items:center;gap:8px;margin-bottom:.5rem;font-size:13px;color:var(--text2)}
 .limit-bar select{font-size:13px;padding:3px 6px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer}
@@ -211,10 +214,13 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
     </div>
     <span id="streak-badge" style="font-size:12px;color:var(--text3)"></span>
   </div>
-  <div class="prog-row">
-    <span id="prog-label">Загрузка...</span>
-    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
-    <span id="prog-count"></span>
+  <div class="prog-row" style="flex-direction:column;align-items:stretch;gap:5px">
+    <div class="prog-track">
+      <div class="prog-seg full" id="prog-full" style="width:0%"></div>
+      <div class="prog-seg write" id="prog-write" style="width:0%"></div>
+      <div class="prog-seg know" id="prog-know" style="width:0%"></div>
+    </div>
+    <div id="prog-count" style="display:flex;justify-content:space-between;font-size:11px"></div>
   </div>
   <div id="main"></div>
 </div>
@@ -2624,6 +2630,29 @@ function matchAnswer(userVal,answer){
   return allVariants.some(v=>u===v)||normFlex(u)===normFlex(norm(answer));
 }
 
+/* ── graded recognition check (GR→RU): exact / close(1 typo) / wrong ── */
+function evalRecognition(userVal,answer){
+  const u=norm(userVal);
+  if(!u) return {level:'wrong'};
+  // exact via existing matcher (handles slashes, notes, parens, pronouns)
+  if(matchAnswer(userVal,answer)) return {level:'exact'};
+  // build the same variant list to test typo-distance against each
+  const stripPron=s=>s.replace(/^(он\/она|он|она|они|оно|ты|вы|мы|я)\s+/i,'').trim();
+  const stripNote=s=>s.replace(/\s*[—–-]\s*(муж|жен|ср|разг|формал|вежл|неформ|тип|Тип|м\.р|ж\.р|с\.р)[^/]*/gi,'').trim();
+  const parts=answer.split(/\s*\/\s*/);
+  const forms=[];
+  for(const p of[answer,...parts]){
+    const noNote=stripNote(p);
+    forms.push(noNote,noNote.replace(/\(.*?\)/g,'').trim(),noNote.replace(/\(([^)]+)\)/g,'$1').trim());
+  }
+  const variants=[...new Set(forms.map(f=>norm(f)).filter(Boolean).flatMap(v=>[v,norm(stripPron(v))]))];
+  // typo tolerance ONLY on single-word variants (multi-word: a 1-letter diff is likely a wrong/missing word)
+  for(const v of variants){
+    if(!v.includes(' ')&&!u.includes(' ')&&editDist1(u,v)) return {level:'close'};
+  }
+  return {level:'wrong'};
+}
+
 /* ── graded writing check (RU→GR): distinguishes exact / close / wrong ── */
 const GREEK_ART=/^(ο\/η|ο|η|το|οι|τα)\s+/i;
 function stripAccents(s){return s.normalize('NFD').replace(/[\u0300-\u0301\u0342\u0344\u0345]/g,'').normalize('NFC');}
@@ -2682,19 +2711,35 @@ function editDist1(a,b){
   return true;
 }
 
-/* ── update overall progress bar (three-tier) ── */
+/* ── update overall progress bar (three-segment difficulty ladder) ── */
 function updateProgress(){
   const words=ALL_DATA.filter(w=>!isSentence(w));
-  const know=words.filter(w=>getStatus(w[0])==='learned').length;   // знаю перевод
-  const write=words.filter(w=>getWriteStatus(w[0])==='mastered').length; // умею писать
-  const full=words.filter(w=>getFullStatus(w[0])==='full').length;  // выучено (оба)
-  const pct=words.length?Math.round(know/words.length*100):0;
-  const fill=document.getElementById('prog-fill');
-  const label=document.getElementById('prog-label');
+  const N=words.length||1;
+  let full=0,knowOnly=0,writeOnly=0;
+  const knowTotal0=words.filter(w=>getStatus(w[0])==='learned').length;
+  const writeTotal0=words.filter(w=>getWriteStatus(w[0])==='mastered').length;
+  words.forEach(w=>{
+    const st=getFullStatus(w[0]);
+    if(st==='full') full++;
+    else if(st==='know') knowOnly++;
+    else if(st==='write') writeOnly++;
+  });
+  // disjoint segment widths (sum ≤ 100%): full (both) + writeOnly + knowOnly
+  const pF=Math.round(full/N*100);
+  const pW=Math.round(writeOnly/N*100);
+  const pK=Math.round(knowOnly/N*100);
+  const segF=document.getElementById('prog-full');
+  const segW=document.getElementById('prog-write');
+  const segK=document.getElementById('prog-know');
+  if(segF) segF.style.width=pF+'%';
+  if(segW) segW.style.width=pW+'%';
+  if(segK) segK.style.width=pK+'%';
   const count=document.getElementById('prog-count');
-  if(fill) fill.style.width=pct+'%';
-  if(label) label.innerHTML=`Знаю перевод`;
-  if(count) count.innerHTML=`<span style="color:var(--green)">${know} знаю</span> · <span style="color:#d4a017">✍️${write}</span> · <span style="color:var(--text2)">✓${full} выучено</span> <span style="color:var(--text3)">/ ${words.length}</span>`;
+  if(count) count.innerHTML=
+    `<span style="color:#86efac">${knowTotal0} знаю</span>`+
+    `<span style="color:#eab308">✍️ ${writeTotal0} пишу</span>`+
+    `<span style="color:#22c55e">✓ ${full} выучено</span>`+
+    `<span style="color:var(--text3)">${N} всего</span>`;
   updateDropdownPct();
 }
 
@@ -2866,13 +2911,18 @@ function checkWord(w){
     return;
   }
 
-  // RECOGNITION MODE (gr-ru): unchanged
-  const correct=matchAnswer(userVal,a);
-  recordResult(w,correct);
-  if(correct){
+  // RECOGNITION MODE (gr-ru): graded — exact / close(1 typo) / wrong
+  const rr=evalRecognition(userVal,a);
+  if(rr.level==='exact'){
+    recordResult(w,true);
     input.className='ok';
     document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно!${ex}</div>`;
+  } else if(rr.level==='close'){
+    recordResult(w,true); // soft: typo still counts as known
+    input.className='close';
+    document.getElementById('feedback').innerHTML=`<div class="feedback close">почти — опечатка. Правильно: <span class="correct-ans">${a}</span>${ex}</div>`;
   } else {
+    recordResult(w,false);
     input.className='bad';
     document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильный ответ: <span class="correct-ans">${a}</span>${ex}</div>`;
   }

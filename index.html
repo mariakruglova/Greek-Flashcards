@@ -184,8 +184,11 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <option value="доп">📝 Слова от учительницы</option>
       <option value="еда">🍽️ Еда и кулинария (отдельно)</option>
       <option value="мои_слова">✏️ Мои слова</option>
+      <option value="книга_платон">📖 Θείος Πλάτων (книга)</option>
     </select>
     <button class="icon-btn" onclick="openAddWord()" title="Добавить своё слово">➕</button>
+    <button class="icon-btn" onclick="openSearch()" title="Поиск по словарю">🔍</button>
+    <button class="icon-btn" onclick="openGlossary()" title="Раздел списком (глоссарий)">📖</button>
     <button class="icon-btn" onclick="openStats()">📊</button>
     <button class="icon-btn" onclick="openSettings()" title="Настройки Google Sheets">
       <span class="sync-dot" id="sync-dot"></span> Sheets
@@ -299,6 +302,25 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
 </div>
 
 <!-- Stats modal -->
+<div class="overlay" id="glossary-overlay" onclick="closeGlossary(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:82vh;display:flex;flex-direction:column">
+    <h2 id="glossary-title" style="margin-bottom:4px">📖 Глоссарий</h2>
+    <div id="glossary-sub" style="font-size:12px;color:var(--text3);margin-bottom:8px"></div>
+    <div id="glossary-list" style="overflow-y:auto;flex:1"></div>
+    <div class="modal-btns"><button onclick="closeGlossary()">Закрыть</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="search-overlay" onclick="closeSearch(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:82vh;display:flex;flex-direction:column">
+    <h2 style="margin-bottom:8px">🔍 Поиск по словарю</h2>
+    <input type="text" id="search-input" placeholder="Слово по-гречески или по-русски…" autocomplete="off"
+      oninput="runSearch()" style="width:100%;padding:10px 12px;font-size:15px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);margin-bottom:10px">
+    <div id="search-results" style="overflow-y:auto;flex:1"></div>
+    <div class="modal-btns"><button onclick="closeSearch()">Закрыть</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="stats-overlay" onclick="closeStats(event)">
   <div class="modal" onclick="event.stopPropagation()" style="max-height:80vh;overflow-y:auto">
     <h2>Статистика</h2>
@@ -2008,6 +2030,53 @@ const ALL=[
 ["ο καημένος","бедняга / бедняжка","доп_существительные","Εσύ δεν τον λυπάσαι τον καημένο;"],
 ["σύντομα","скоро / вскоре","доп_наречия","Αυτοί παντρεύονται πολύ σύντομα."],
 ["φτηνά","дёшево","доп_наречия","Τα κάτω διαμερίσματα ενοικιάζονται πολύ φτηνά."],
+["απόρησα με το δίκιο μου","удивился по праву","книга_платон_глава1",""],
+["απορώ","недоумевать / удивляться","книга_платон_глава1",""],
+["άψυχος","бездушный","книга_платон_глава1",""],
+["βαφτίζω","крестить / окрестить","книга_платон_глава1",""],
+["ο βλάκας","глупый / тупой (человек)","книга_платон_глава1",""],
+["βουβαίνομαι","неметь / терять дар речи","книга_платон_глава1",""],
+["βουρκώνω","мутнеть / застилаться слезами","книга_платон_глава1",""],
+["γλιστράω στον πάγο","скользить по льду","книга_платон_глава1",""],
+["δεν έχει καμία σχέση","не имеет никакого отношения","книга_платон_глава1",""],
+["δέρνω με βέργα","бить розгами","книга_платон_глава1",""],
+["η κοιμισμένη βασιλοπούλα","Спящая царевна","книга_платон_глава1",""],
+["η περιέργεια","любопытство","книга_платон_глава1",""],
+["το κατάχωμα","на полу / у самого пола","книга_платон_глава1",""],
+["κάτι σπουδαίο","нечто важное","книга_платон_глава1",""],
+["κοιμάμαι του καλού καιρού","спать беспробудно / как убитый","книга_платон_глава1",""],
+["η Κοκκινοσκουφίτσα","Красная Шапочка","книга_платон_глава1",""],
+["κουτός","глупый / тупой","книга_платон_глава1",""],
+["λογής-λογής","всякого рода / разнообразный","книга_платон_глава1",""],
+["μαντεύω","угадывать","книга_платон_глава1",""],
+["με τον νου","в уме","книга_платон_глава1",""],
+["μοιάζω σταλιά","быть похожим как две капли воды","книга_платон_глава1",""],
+["μπερδεμένη ιστορία","запутанная история","книга_платон_глава1",""],
+["ξυλιασμένος","окоченевший / ледяной","книга_платон_глава1",""],
+["ο ιδρώτας","пот","книга_платон_глава1",""],
+["ο τίτλος","название / заглавие","книга_платон_глава1",""],
+["παρακάτω","дальше / ниже","книга_платон_глава1",""],
+["παραξενεύτηκα","удивился / изумился","книга_платон_глава1",""],
+["παρατάω στη μέση","бросать на полпути","книга_платон_глава1",""],
+["παρδαλός","пёстрый","книга_платон_глава1",""],
+["παρόλο που","несмотря на то, что","книга_платон_глава1",""],
+["πασπατεύω","ощупывать","книга_платон_глава1",""],
+["περιλούζω","окатывать / обливать","книга_платон_глава1",""],
+["σιχαίνομαι","брезговать / не выносить","книга_платон_глава1",""],
+["σκεπάζω","накрывать / покрывать","книга_платон_глава1",""],
+["στο κάτω κάτω","в конце концов","книга_платон_глава1",""],
+["στρουμπουλός","пухленький / кругленький","книга_платон_глава1",""],
+["το κάρβουνο","уголь","книга_платон_глава1",""],
+["το μουσούδι","морда / мордочка","книга_платон_глава1",""],
+["τονίζω","подчёркивать / акцентировать","книга_платон_глава1",""],
+["το πλάσμα","существо","книга_платон_глава1",""],
+["το φερμουάρ","молния (застёжка)","книга_платон_глава1",""],
+["τσιριχτός","визгливый / пронзительный","книга_платон_глава1",""],
+["τυλίγω","заворачивать","книга_платон_глава1",""],
+["φλύαρος","болтливый","книга_платон_глава1",""],
+["χαϊδεύω","гладить / ласкать","книга_платон_глава1",""],
+["η χούφτα","горсть / пригоршня","книга_платон_глава1",""],
+["χρωστάω","быть должным","книга_платон_глава1",""],
 ];
 const SENTENCES=[
 ["Γεια σου! Από 'δω η Βέρα.","Привет! Это Вера.","предложения"],
@@ -2065,9 +2134,9 @@ const SENTENCES=[
 
 /* ── data plumbing ── */
 function isSentence(w){return w.length===4&&w[3]==='s'||w[2]==='предложения';}
-function tagOf(t){for(const p of['клик1','клик2','ен11','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
+function tagOf(t){for(const p of['клик1','клик2','ен11','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','книга_платон','книга','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
 const ALL_DATA=[...ALL.map(w=>[...w,'w']),...SENTENCES.map(w=>[...w,'s'])];
-const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','предложения':'Предложения'};
+const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','книга_платон':'📖 Θείος Πλάτων (книга)','предложения':'Предложения'};
 
 /* ── state ── */
 let deck=[],idx=0,mode='gr-ru',okCount=0,badCount=0,checked=false,streak=0,retriedKeys=new Set();
@@ -2096,7 +2165,7 @@ function rebuildAllData(){
 function populateTagSelect(){
   const sel=document.getElementById('cw-tag');
   if(!sel) return;
-  const order=['мои_слова','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда'];
+  const order=['мои_слова','книга_платон','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда'];
   sel.innerHTML=order.map(t=>`<option value="${t}">${sectionLabels[t]||t}</option>`).join('');
 }
 
@@ -2450,7 +2519,7 @@ function openStats(){
     const total=entries.reduce((s,[,v])=>s+v.seen,0);
     const totalOk=entries.reduce((s,[,v])=>s+v.correct,0);
     const acc=total?Math.round(totalOk/total*100):0;
-    const allWords=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда'));
+    const allWords=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
     const knowCount=allWords.filter(w=>getStatus(w[0])==='learned').length;      // знаю перевод
     const writeCount=allWords.filter(w=>getWriteStatus(w[0])==='mastered').length; // умею писать
     const fullCount=allWords.filter(w=>getFullStatus(w[0])==='full').length;      // выучено (оба)
@@ -2498,7 +2567,7 @@ function openStats(){
         📝 Предложения (узнавание): <strong style="color:var(--text2)">${sentKnown} / ${allSents.length}</strong> — считаются отдельно
       </div>`;
     // Show sections in a fixed order
-    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','клик1','клик2','доп','предложения'];
+    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','клик1','клик2','доп','книга_платон','предложения'];
     let sectHtml='<div class="section-bars">';
     for(const tag of sectionOrder){
       const v=sections[tag];
@@ -2546,6 +2615,79 @@ function closeStats(e){
   if(!e||e.target===document.getElementById('stats-overlay'))
     document.getElementById('stats-overlay').classList.remove('open');
     if(tg?.BackButton){tg.BackButton.hide();tg.BackButton.offClick(closeStats);}
+}
+/* ── Glossary: current section as a scrollable list ── */
+function openGlossary(){
+  const f=document.getElementById('tag-filter').value;
+  const words=(function(){
+    if(f==='all'||f==='words') return ALL_DATA.filter(w=>!isSentence(w));
+    if(f==='предложения') return ALL_DATA.filter(w=>isSentence(w));
+    return ALL_DATA.filter(w=>tagOf(w[2])===f||w[2]===f||w[2].startsWith(f+'_'));
+  })();
+  const title=document.getElementById('tag-filter').selectedOptions[0]?.dataset.base
+    ||document.getElementById('tag-filter').selectedOptions[0]?.text||'Глоссарий';
+  document.getElementById('glossary-title').textContent='📖 '+title.replace(/\s*✓\d+%$/,'');
+  document.getElementById('glossary-sub').textContent=`${words.length} слов · листайте для чтения`;
+  const box=document.getElementById('glossary-list');
+  if(!words.length){box.innerHTML='<div style="color:var(--text3);text-align:center;padding:20px">Раздел пуст</div>';}
+  else box.innerHTML=words.map(w=>{
+    const ex=w[3]&&w[3]!=='s'?`<div style="font-size:12px;color:var(--text3);font-style:italic;margin-top:2px">${w[3]}</div>`:'';
+    return `<div style="padding:9px 4px;border-bottom:0.5px solid var(--border2)">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+        <span style="font-size:16px;color:var(--text);font-weight:500">${w[0]}</span>
+        <span style="font-size:14px;color:var(--text2);text-align:right">${w[1]}</span>
+      </div>${ex}
+    </div>`;
+  }).join('');
+  document.getElementById('glossary-overlay').classList.add('open');
+}
+function closeGlossary(e){
+  if(!e||e.target===document.getElementById('glossary-overlay'))
+    document.getElementById('glossary-overlay').classList.remove('open');
+}
+/* ── Dictionary search ── */
+function openSearch(){
+  const ov=document.getElementById('search-overlay');
+  ov.classList.add('open');
+  const inp=document.getElementById('search-input');
+  inp.value=''; document.getElementById('search-results').innerHTML=
+    '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Начните печатать…</div>';
+  setTimeout(()=>inp.focus(),50);
+}
+function closeSearch(e){
+  if(!e||e.target===document.getElementById('search-overlay'))
+    document.getElementById('search-overlay').classList.remove('open');
+}
+function runSearch(){
+  const q=norm(document.getElementById('search-input').value);
+  const box=document.getElementById('search-results');
+  if(!q||q.length<1){box.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Начните печатать…</div>';return;}
+  const qF=stripAccents(q);
+  // match against greek (w[0], accent-insensitive) OR russian (w[1])
+  const hits=ALL_DATA.filter(w=>{
+    const g=stripAccents(norm(w[0])), r=norm(w[1]);
+    return g.includes(qF)||r.includes(q);
+  });
+  // sort: exact-ish (startsWith) first, then by section
+  hits.sort((a,b)=>{
+    const ag=stripAccents(norm(a[0])),bg=stripAccents(norm(b[0]));
+    const aStart=ag.startsWith(qF)||norm(a[1]).startsWith(q)?0:1;
+    const bStart=bg.startsWith(qF)||norm(b[1]).startsWith(q)?0:1;
+    return aStart-bStart;
+  });
+  if(!hits.length){box.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Ничего не найдено</div>';return;}
+  const shown=hits.slice(0,60);
+  box.innerHTML=shown.map(w=>{
+    const sec=sectionLabels[tagOf(w[2])]||w[2];
+    const ex=w[3]&&w[3]!=='s'?`<div style="font-size:12px;color:var(--text3);font-style:italic;margin-top:2px">${w[3]}</div>`:'';
+    return `<div style="padding:9px 4px;border-bottom:0.5px solid var(--border2)">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+        <span style="font-size:16px;color:var(--text);font-weight:500">${w[0]}</span>
+        <span style="font-size:11px;color:var(--text3);white-space:nowrap">${sec}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text2)">${w[1]}</div>${ex}
+    </div>`;
+  }).join('')+(hits.length>60?`<div style="color:var(--text3);font-size:12px;text-align:center;padding:10px">…и ещё ${hits.length-60}. Уточните запрос.</div>`:'');
 }
 function clearStats(){
   if(confirm('Сбросить всю статистику?')){
@@ -2713,7 +2855,7 @@ function editDist1(a,b){
 
 /* ── update overall progress bar (three-segment difficulty ladder) ── */
 function updateProgress(){
-  const words=ALL_DATA.filter(w=>!isSentence(w));
+  const words=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('книга'));
   const N=words.length||1;
   let full=0,knowOnly=0,writeOnly=0;
   const knowTotal0=words.filter(w=>getStatus(w[0])==='learned').length;
@@ -2761,13 +2903,13 @@ function updateDropdownPct(){
 
 function applyFilter(){
   const f=document.getElementById('tag-filter').value;
-  if(f==='all') deck=ALL_DATA.filter(w=>!w[2].startsWith('еда'));
-  else if(f==='words') deck=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда'));
+  if(f==='all') deck=ALL_DATA.filter(w=>!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
+  else if(f==='words') deck=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
   else if(f==='предложения') deck=ALL_DATA.filter(w=>isSentence(w));
-  else if(f==='слабые') deck=ALL_DATA.filter(w=>isWeak(w[0])&&!isSentence(w)&&!w[2].startsWith('еда'));
-  else if(f==='учу') deck=ALL_DATA.filter(w=>getStatus(w[0])==='learning'&&!isSentence(w)&&!w[2].startsWith('еда'));
-  else if(f==='выученные') deck=ALL_DATA.filter(w=>getStatus(w[0])==='learned'&&!w[2].startsWith('еда'));
-  else if(f==='новые') deck=ALL_DATA.filter(w=>getStatus(w[0])==='new'&&!isSentence(w)&&!w[2].startsWith('еда'));
+  else if(f==='слабые') deck=ALL_DATA.filter(w=>isWeak(w[0])&&!isSentence(w)&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
+  else if(f==='учу') deck=ALL_DATA.filter(w=>getStatus(w[0])==='learning'&&!isSentence(w)&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
+  else if(f==='выученные') deck=ALL_DATA.filter(w=>getStatus(w[0])==='learned'&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
+  else if(f==='новые') deck=ALL_DATA.filter(w=>getStatus(w[0])==='new'&&!isSentence(w)&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
   else if(f==='все_числа') deck=ALL_DATA.filter(w=>
     w[2].includes('числа')||w[2].includes('месяц')||w[2].includes('дни')
   );
@@ -2776,7 +2918,7 @@ function applyFilter(){
       'έξω','κάτω','πάνω','ένα πεντάευρω','ένα δεκάευρω','ένα εικοσάευρω','ένα πενηντάευρω',
       'αυτός εδώ','αυτή εδώ','αυτό εδώ']);
     const AB=['λέω','τρώω','ακούω','καίω','κλαίω','σπάω','φταίω','πλέω','πάω'];
-    deck=ALL_DATA.filter(w=>!isSentence(w)&&(/[άα]ω$|ώ$|μαι$|[^ά]ω$/.test(w[0])||w[2].includes('глагол')||AB.includes(w[0]))&&!w[2].startsWith('еда')&&!NONVERB_EXCEPT.has(w[0]));
+    deck=ALL_DATA.filter(w=>!isSentence(w)&&(/[άα]ω$|ώ$|μαι$|[^ά]ω$/.test(w[0])||w[2].includes('глагол')||AB.includes(w[0]))&&!w[2].startsWith('еда')&&!w[2].startsWith('книга')&&!NONVERB_EXCEPT.has(w[0]));
   }
   else if(f==='глаголы_А') {
     const excl=['λέω','τρώω','ακούω','καίω','κλαίω','σπάω','φταίω','πλέω','πάω'];

@@ -152,6 +152,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
   <div class="top-bar">
     <button class="mode-btn active" id="btn-gr-ru" onclick="setMode('gr-ru')">Греч → Рус</button>
     <button class="mode-btn" id="btn-ru-gr" onclick="setMode('ru-gr')">✍️ Рус → Греч</button>
+    <button class="mode-btn" id="btn-aorist" onclick="setMode('aorist')">⏮ Аорист</button>
     <select id="tag-filter" onchange="applyFilter()">
       <option value="all">Все разделы</option>
       <option value="words">Только слова</option>
@@ -179,6 +180,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <option value="ен8">Ενότητα 8 — Πόσο κάνουν όλα;</option>
       <option value="ен9">Ενότητα 9 — Πάμε για ψώνια;</option>
       <option value="ен11">Ενότητα 11 — Ψάχνω για σπίτι</option>
+      <option value="ен12">Ενότητα 12 — Ένα ταξίδι</option>
       <option value="клик1">📗 ΚΛΙΚ Ενότητα 1 — Εγώ και οι άλλοι</option>
       <option value="клик2">📗 ΚΛΙΚ Ενότητα 2 — Ώρα για διαφημίσεις</option>
       <option value="доп">📝 Слова от учительницы</option>
@@ -2077,6 +2079,39 @@ const ALL=[
 ["χαϊδεύω","гладить / ласкать","книга_платон_глава1",""],
 ["η χούφτα","горсть / пригоршня","книга_платон_глава1",""],
 ["χρωστάω","быть должным","книга_платон_глава1",""],
+["το ταξίδι","путешествие / поездка","ен12_слова","Ένα ταξίδι στην Ελλάδα."],
+["πάω","идти / ехать","ен12_глаголы","Πήγα σπίτι μου."],
+["αποφασίζω","решать / принимать решение","ен12_глаголы","Αποφασίσαμε να κάνουμε τον γύρο της Ευρώπης."],
+["σβήνω","гасить / тушить; выключать","ен12_глаголы","Το πλοίο έσβησε τις μηχανές του."],
+["προσέχω","обращать внимание / присматривать","ен12_глаголы","Πρόσεξα τον γιο μου το απόγευμα."],
+["διψάω","хотеть пить / испытывать жажду","ен12_глаголы","Δίψασα και πείνασα στον δρόμο."],
+["πονάω","болеть / испытывать боль","ен12_глаголы","Πόνεσε το κεφάλι μου με τη γραμματική."],
+["τραβάω","тянуть / тащить","ен12_глаголы","Το άλλο καράβι μάς τράβηξε μέχρι τη Σύρο."],
+["καλώ","звать / приглашать","ен12_глаголы","Κάλεσαν όλη την οικογένεια."],
+["το σύνορο","граница","ен12_слова","Φτάσαμε στα σύνορα."],
+["η κωμωδία","комедия","ен12_слова","Πήγαμε σινεμά, σε μια κωμωδία."],
+["η εργασία","работа / задание (письменное)","ен12_слова","Έγραψες την εργασία σου για το Πανεπιστήμιο;"],
+["ο γύρος","круг / объезд","ен12_слова","Κάναμε τον γύρο της Ευρώπης."],
+["το κεφάλι","голова","ен12_слова","Πόνεσε το κεφάλι μου."],
+["το σωσίβιο","спасательный жилет","ен12_слова","Θυμάμαι ότι φορέσαμε τα σωσίβια."],
+["το κατάστρωμα","палуба","ен12_слова","Ήμασταν στο κατάστρωμα του πλοίου."],
+["η καμπίνα","каюта","ен12_слова","Είχαμε καμπίνα για το βράδυ."],
+["το μεγάφωνο","громкоговоритель / динамик","ен12_слова","Δύο ώρες μετά μίλησαν από τα μεγάφωνα."],
+["ο συγγενής","родственник","ен12_слова","Οι γονείς της κάλεσαν τους συγγενείς τους."],
+["σοκαρισμένος","шокированный / потрясённый","ен12_прилагательные","Οι γονείς μου ήταν σοκαρισμένοι."],
+["ενθουσιασμένος","воодушевлённый / в восторге","ен12_прилагательные","Ήμουν ενθουσιασμένη με το ταξίδι."],
+["χθες","вчера (= χτες)","ен12_наречия","Χθες ήταν Τρίτη."],
+["προχθές","позавчера (= προχτές)","ен12_наречия","Προχθές ξύπνησα αργά."],
+["πέρυσι","в прошлом году","ен12_наречия","Πέρυσι ήταν 2009."],
+["πρόπερσι","позапрошлый год","ен12_наречия","Πρόπερσι ήταν 2008."],
+["φέτος","в этом году","ен12_наречия","Φέτος είναι 2010."],
+["περασμένος","прошлый / прошедший","ен12_прилагательные","Την περασμένη εβδομάδα ήμουν στην Κρήτη."],
+["προηγούμενος","предыдущий","ен12_прилагательные","Τον προηγούμενο μήνα ήμουν στην Αθήνα."],
+["ύστερα από","после / спустя","ен12_выражения","Πήγα σπίτι μου ύστερα από έναν χρόνο."],
+["τελευταία στιγμή","в последний момент","ен12_выражения","Τελευταία στιγμή το αποφάσισα."],
+["πρώτη φορά ταξίδι","впервые в поездке","ен12_выражения","Έκανα πρώτη φορά ταξίδι με πλοίο."],
+["Είμαι όλος αυτιά","Я весь внимание / весь во внимании","ен12_выражения","Λέγε, είμαι όλος αυτιά!"],
+["Καλά έκανες και...","Правильно сделал(а), что...","ен12_выражения","Μπράβο, καλά έκανες και πήγες."],
 ];
 const SENTENCES=[
 ["Γεια σου! Από 'δω η Βέρα.","Привет! Это Вера.","предложения"],
@@ -2134,9 +2169,26 @@ const SENTENCES=[
 
 /* ── data plumbing ── */
 function isSentence(w){return w.length===4&&w[3]==='s'||w[2]==='предложения';}
-function tagOf(t){for(const p of['клик1','клик2','ен11','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','книга_платон','книга','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
+function tagOf(t){for(const p of['клик1','клик2','ен11','ен12','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','книга_платон','книга','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
 const ALL_DATA=[...ALL.map(w=>[...w,'w']),...SENTENCES.map(w=>[...w,'s'])];
-const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','книга_платон':'📖 Θείος Πλάτων (книга)','предложения':'Предложения'};
+/* Aorist (past tense) forms, keyed by present-tense verb. Separate from card data
+   so it doesn't disturb array indices. Fill in more verbs over time. */
+const AORIST={
+ 'αγοράζω':'αγόρασα','ταξιδεύω':'ταξίδεψα','αλλάζω':'άλλαξα','φτάνω':'έφτασα',
+ 'γράφω':'έγραψα','ψάχνω':'έψαξα','πληρώνω':'πλήρωσα','διαβάζω':'διάβασα',
+ 'δουλεύω':'δούλεψα','ανάβω':'άναψα','μιλάω':'μίλησα','γελάω':'γέλασα',
+ 'μπορώ':'μπόρεσα','περνάω':'πέρασα','ξεχνάω':'ξέχασα','πάω':'πήγα',
+ 'βλέπω':'είδα','τρώω':'έφαγα','πίνω':'ήπια','κάνω':'έκανα','ρωτάω':'ρώτησα',
+ 'απαντάω':'απάντησα','ξυπνάω':'ξύπνησα','συναντάω':'συνάντησα','περπατάω':'περπάτησα',
+ 'σταματάω':'σταμάτησα','αργώ':'άργησα','τηλεφωνώ':'τηλεφώνησα','χρησιμοποιώ':'χρησιμοποίησα',
+ 'φοράω':'φόρεσα','πονάω':'πόνεσα','διψάω':'δίψασα','πεινάω':'πείνασα',
+ 'αποφασίζω':'αποφάσισα','σβήνω':'έσβησα','προσέχω':'πρόσεξα','τραβάω':'τράβηξα',
+ 'καλώ':'κάλεσα','κλείνω':'έκλεισα','ανοίγω':'άνοιξα','γυρίζω':'γύρισα',
+ 'δοκιμάζω':'δοκίμασα','κανονίζω':'κανόνισα','γνωρίζω':'γνώρισα','τελειώνω':'τελείωσα',
+ 'βοηθάω':'βοήθησα','παίζω':'έπαιξα','χάνω':'έχασα','ζω':'έζησα',
+};
+function hasAorist(w){return AORIST.hasOwnProperty(w[0]);}
+const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','ен12':'Ενότητα 12','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','книга_платон':'📖 Θείος Πλάτων (книга)','предложения':'Предложения'};
 
 /* ── state ── */
 let deck=[],idx=0,mode='gr-ru',okCount=0,badCount=0,checked=false,streak=0,retriedKeys=new Set();
@@ -2165,7 +2217,7 @@ function rebuildAllData(){
 function populateTagSelect(){
   const sel=document.getElementById('cw-tag');
   if(!sel) return;
-  const order=['мои_слова','книга_платон','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','доп','еда'];
+  const order=['мои_слова','книга_платон','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','доп','еда'];
   sel.innerHTML=order.map(t=>`<option value="${t}">${sectionLabels[t]||t}</option>`).join('');
 }
 
@@ -2567,7 +2619,7 @@ function openStats(){
         📝 Предложения (узнавание): <strong style="color:var(--text2)">${sentKnown} / ${allSents.length}</strong> — считаются отдельно
       </div>`;
     // Show sections in a fixed order
-    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','клик1','клик2','доп','книга_платон','предложения'];
+    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','клик1','клик2','доп','книга_платон','предложения'];
     let sectHtml='<div class="section-bars">';
     for(const tag of sectionOrder){
       const v=sections[tag];
@@ -2733,6 +2785,25 @@ function getWriteStatus(key){
   if(s.wCorrect>=5&&(s.wSessions||0)>=2&&(s.wCorrect/s.wSeen)>=0.7) return 'mastered';
   return 'learning';
 }
+/* ── aorist (past tense) progress: independent counter, like writing ── */
+function recordAorist(key,correct){
+  if(!wordStats[key]) wordStats[key]={seen:0,correct:0,sessions:0,lastDay:''};
+  const s=wordStats[key];
+  if(!s.aSeen){s.aSeen=0;s.aCorrect=0;s.aSessions=0;s.aLastDay='';}
+  s.aSeen++;
+  if(correct){
+    s.aCorrect++;
+    const today=new Date().toDateString();
+    if(s.aLastDay!==today){s.aSessions=(s.aSessions||0)+1;s.aLastDay=today;}
+  }
+  saveWordStats();
+}
+function getAoristStatus(key){
+  const s=wordStats[key];
+  if(!s||!s.aSeen) return 'new';
+  if(s.aCorrect>=5&&(s.aSessions||0)>=2&&(s.aCorrect/s.aSeen)>=0.7) return 'mastered';
+  return 'learning';
+}
 /* ── combined three-tier status ──
    getStatus()=='learned'  → знаю перевод (recognition passed)
    getWriteStatus()=='mastered' → умею писать (spelling passed)
@@ -2749,6 +2820,7 @@ function getFullStatus(key){
 }
 /* Is a word "mastered" for the CURRENT mode? Used by "Сначала новые" ordering. */
 function isMasteredForMode(key,m){
+  if(m==='aorist') return getAoristStatus(key)==='mastered';
   return m==='ru-gr' ? getWriteStatus(key)==='mastered' : getStatus(key)==='learned';
 }
 
@@ -2954,6 +3026,11 @@ function applyFilter(){
   }
   else deck=ALL_DATA.filter(w=>w[2]===f||w[2].startsWith(f+'_')||tagOf(w[2])===f);
 
+  // ── Aorist mode: keep only verbs that have an aorist form ──
+  if(mode==='aorist'){
+    deck=deck.filter(w=>!isSentence(w)&&hasAorist(w));
+  }
+
   // ── Priority ordering (mode-aware): "mastered for current mode" defined by active mode ──
   const prio=document.getElementById('priority-select')?.value||'new-first';
   const isMast=w=>isMasteredForMode(w[0],mode);       // mastered in the mode we're studying
@@ -2997,6 +3074,8 @@ function setMode(m){
   mode=m;
   document.getElementById('btn-gr-ru').className='mode-btn'+(m==='gr-ru'?' active':'');
   document.getElementById('btn-ru-gr').className='mode-btn'+(m==='ru-gr'?' active':'');
+  const ab=document.getElementById('btn-aorist');
+  if(ab) ab.className='mode-btn'+(m==='aorist'?' active':'');
   applyFilter(); // rebuild deck: "new-first" priority is mode-dependent
 }
 function updateStats(){
@@ -3020,11 +3099,32 @@ function checkWord(w){
   if(checked) return;
   checked=true;
   const cm=cardMode(w);
-  const a=cm==='gr-ru'?w[1]:w[0];
+  const a=cm==='aorist'?(AORIST[w[0]]||''):(cm==='gr-ru'?w[1]:w[0]);
   const input=document.getElementById('answer-input');
   const userVal=input.value.trim();
   if(!userVal) return;
   const ex=w[3]&&w[3]!=='s'?`<span class="ex">${w[3]}</span>`:'';
+
+  if(cm==='aorist'){
+    // AORIST MODE: write past tense, graded soft, records to aorist counter
+    const r=evalWriting(userVal,a);
+    if(r.level==='exact'){
+      recordAorist(w[0],true);
+      input.className='ok';
+      document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно! <span class="correct-ans">${w[0]} → ${a}</span></div>`;
+    } else if(r.level==='close'){
+      recordAorist(w[0],true);
+      input.className='close';
+      const why=r.accentOnly?'почти — следи за ударением':'почти — маленькая опечатка';
+      document.getElementById('feedback').innerHTML=`<div class="feedback close">${why}. Правильно: <span class="correct-ans">${a}</span></div>`;
+    } else {
+      recordAorist(w[0],false);
+      input.className='bad';
+      document.getElementById('feedback').innerHTML=`<div class="feedback bad">Аорист: <span class="correct-ans">${a}</span> <span style="color:var(--text3)">(${w[0]})</span></div>`;
+    }
+    document.getElementById('check-btn').textContent='Далее →';
+    return;
+  }
 
   if(cm==='ru-gr'){
     // WRITING MODE: graded, soft-scoring, records to writing counter
@@ -3122,9 +3222,10 @@ function renderCard(){
   const w=deck[idx];
   const cm=cardMode(w);
   const isSent=isSentence(w);
-  const q=cm==='gr-ru'?w[0]:w[1];
-  const placeholder=isSent?'Напиши по-гречески...':cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
-  const hint=cm==='gr-ru'?'→ русский':'→ греческий';
+  const isAorist=(cm==='aorist');
+  const q=isAorist?w[0]:(cm==='gr-ru'?w[0]:w[1]);
+  const placeholder=isSent?'Напиши по-гречески...':isAorist?'Напиши аорист (прош. время)...':cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
+  const hint=isAorist?`→ аорист · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
   const tagLabel=isSent?'предложение':tagOf(w[2]).replace(/ен(\d)/,'ενότητα $1').replace('алфавит','Αλφάβητο').replace('введение','Εισαγωγή');
   const st=wordStats[w[0]];
   const status=getStatus(w[0]);
@@ -3172,12 +3273,18 @@ function renderDone(){
   const learnedTotal=ALL_DATA.filter(w=>getStatus(w[0])==='learned').length;
   // writing-mode summary line
   const isWriting=(mode==='ru-gr');
+  const isAorist=(mode==='aorist');
   const writeTotal=ALL_DATA.filter(w=>!isSentence(w)&&getWriteStatus(w[0])==='mastered').length;
   const deckWords=deck.filter(w=>!isSentence(w));
   const deckWriteMastered=deckWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
   const knowTotal=ALL_DATA.filter(w=>!isSentence(w)&&getStatus(w[0])==='learned').length;
   const fullTotal=ALL_DATA.filter(w=>!isSentence(w)&&getFullStatus(w[0])==='full').length;
-  const writeLine=isWriting
+  const aoristTotal=ALL_DATA.filter(w=>hasAorist(w)&&getAoristStatus(w[0])==='mastered').length;
+  const aoristAll=Object.keys(AORIST).length;
+  const deckAoristMast=deckWords.filter(w=>getAoristStatus(w[0])==='mastered').length;
+  const writeLine=isAorist
+    ? `<p style="font-size:13px;color:#7c5cff;margin-top:4px">⏮ Знаю аорист: <strong>${deckAoristMast}</strong> из <strong>${deckWords.length}</strong> в сессии · <strong>${aoristTotal}</strong> из ${aoristAll} всего</p>`
+    : isWriting
     ? `<p style="font-size:13px;color:#d4a017;margin-top:4px">✍️ Умею писать: <strong>${deckWriteMastered}</strong> из <strong>${deckWords.length}</strong> в разделе · <strong>${writeTotal}</strong> всего</p>`
     : `<p style="font-size:13px;color:var(--green);margin-top:4px">Знаю перевод: <strong>${knowTotal}</strong> · ✓ Выучено (оба): <strong>${fullTotal}</strong></p>`;
   document.getElementById('main').innerHTML=`<div class="done-box">

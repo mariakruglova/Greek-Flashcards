@@ -2526,6 +2526,7 @@ function dotError(){
 /* ── Google Sheets sync ── */
 function syncToSheets(greek,translation,tag,cardMode,correct){
   if(!sheetsUrl) return;
+  if(sheetsUrl===progressUrl) return; // same endpoint as progress sync — don't send log format there
   dotSending();
   const payload=JSON.stringify({
     greek,translation,tag,

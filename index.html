@@ -2497,19 +2497,14 @@ function pullProgress(){
 }
 function pushProgress(){
   if(!progressUrl) return;
+  // no-cors: request goes through (like the working log-sync), but we can't read
+  // the response. That's fine — next pullProgress() on startup adopts the merged copy.
   fetch(progressUrl,{
     method:'POST',
+    mode:'no-cors',
     headers:{'Content-Type':'text/plain'}, // text/plain avoids CORS preflight
     body:JSON.stringify(wordStats)
-  })
-    .then(r=>r.json())
-    .then(res=>{
-      if(res&&res.ok&&res.data){ // server returns merged copy — adopt it
-        wordStats=mergeProgressMax(wordStats,res.data);
-        saveWordStats();
-      }
-    })
-    .catch(()=>{});
+  }).catch(()=>{});
 }
 
 /* ── sync dot ── */

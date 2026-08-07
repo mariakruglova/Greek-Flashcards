@@ -2515,7 +2515,7 @@ function pushProgress(){
 /* ── sync dot ── */
 function updateSyncDot(){
   const dot=document.getElementById('sync-dot');
-  dot.className='sync-dot'+(sheetsUrl?'ok':'');
+  dot.className='sync-dot'+((sheetsUrl||progressUrl)?'ok':'');
 }
 function dotSending(){
   const d=document.getElementById('sync-dot');

@@ -295,6 +295,12 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
     <div class="step"><div class="step-n">5</div><div>Вставь URL ниже 👇</div></div>
     <input type="text" id="sheets-url-input" placeholder="https://script.google.com/macros/s/.../exec">
     <div id="sheets-test-result" style="font-size:12px;margin-bottom:.5rem"></div>
+    <div style="border-top:0.5px solid var(--border2);margin:12px 0 8px;padding-top:12px">
+      <div style="font-weight:600;margin-bottom:4px">🔄 Синхронизация прогресса (между устройствами)</div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:6px">Отдельный веб-апп из файла <code>apps_script_progress.gs</code>. Прогресс (что выучено/умею писать/аорист) будет один на телефоне и компьютере.</p>
+      <input type="text" id="progress-url-input" placeholder="URL синка прогресса …/exec">
+      <div id="progress-sync-result" style="font-size:12px;margin-top:4px"></div>
+    </div>
     <div class="modal-btns">
       <button onclick="clearSheetsUrl()">Сбросить</button>
       <button onclick="closeSettings()">Отмена</button>
@@ -2192,6 +2198,7 @@ const sectionLabels={'алфавит':'Алфавит','введение':'Вв�
 
 /* ── state ── */
 let deck=[],idx=0,mode='gr-ru',okCount=0,badCount=0,checked=false,streak=0,retriedKeys=new Set();
+let progressUrl='';
 let wordStats={};  // {greek: {seen,correct}}
 let sheetsUrl='';
 
@@ -2448,11 +2455,62 @@ async function publishToGitHub(){
 
 function loadPersisted(){
   sheetsUrl=lsGet('greek_sheets_url')||'';
+  progressUrl=lsGet('greek_progress_url')||'';
   updateSyncDot();
   try{wordStats=JSON.parse(lsGet('greek_word_stats')||'{}');}catch(e){wordStats={};}
   loadCustomWords();
+  if(progressUrl) pullProgress(); // fetch cloud copy on startup, merge in
 }
 function saveWordStats(){lsSet('greek_word_stats',JSON.stringify(wordStats));}
+
+/* ── Progress sync between devices (separate Apps Script, blob in one cell) ── */
+function mergeProgressMax(local,cloud){
+  // merge two wordStats objects, taking max per counter (safe: never rolls back)
+  const out={};
+  const keys=new Set([...Object.keys(local||{}),...Object.keys(cloud||{})]);
+  const numF=['seen','correct','sessions','wSeen','wCorrect','wSessions','aSeen','aCorrect','aSessions'];
+  const dayP=[['lastDay','correct'],['wLastDay','wCorrect'],['aLastDay','aCorrect']];
+  for(const key of keys){
+    const x=local[key]||{}, y=cloud[key]||{}, m={};
+    for(const f of numF){const vx=x[f]||0,vy=y[f]||0; if(vx||vy) m[f]=Math.max(vx,vy);}
+    for(const [dayF,corrF] of dayP){
+      const cx=x[corrF]||0,cy=y[corrF]||0;
+      const day=(cx>=cy?x[dayF]:y[dayF])||x[dayF]||y[dayF];
+      if(day) m[dayF]=day;
+    }
+    out[key]=m;
+  }
+  return out;
+}
+function pullProgress(){
+  if(!progressUrl) return;
+  fetch(progressUrl,{method:'GET'})
+    .then(r=>r.json())
+    .then(cloud=>{
+      if(cloud&&typeof cloud==='object'){
+        wordStats=mergeProgressMax(wordStats,cloud);
+        saveWordStats();
+        if(typeof updateProgress==='function') updateProgress();
+      }
+    })
+    .catch(()=>{}); // offline: keep local, will sync later
+}
+function pushProgress(){
+  if(!progressUrl) return;
+  fetch(progressUrl,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'}, // text/plain avoids CORS preflight
+    body:JSON.stringify(wordStats)
+  })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res&&res.ok&&res.data){ // server returns merged copy — adopt it
+        wordStats=mergeProgressMax(wordStats,res.data);
+        saveWordStats();
+      }
+    })
+    .catch(()=>{});
+}
 
 /* ── sync dot ── */
 function updateSyncDot(){
@@ -2533,6 +2591,8 @@ function openSettings(){
     return;
   }
   input.value=sheetsUrl||'';
+  const pin=document.getElementById('progress-url-input');
+  if(pin) pin.value=progressUrl||'';
   overlay.style.display='flex';
   overlay.classList.add('open');
   if(tg?.BackButton){tg.BackButton.show();tg.BackButton.onClick(closeSettings);}
@@ -2550,9 +2610,19 @@ function saveSheetsUrl(){
   const val=document.getElementById('sheets-url-input').value.trim();
   sheetsUrl=val;
   lsSet('greek_sheets_url',val);
+  // progress sync URL
+  const pval=(document.getElementById('progress-url-input')?.value||'').trim();
+  progressUrl=pval;
+  lsSet('greek_progress_url',pval);
   updateSyncDot();
-  document.getElementById('sheets-test-result').textContent=val?'URL сохранён ✓':'URL очищен';
-  setTimeout(()=>{document.getElementById('sheets-test-result').textContent='';},2000);
+  const res=document.getElementById('sheets-test-result');
+  res.textContent=val?'URL сохранён ✓':'URL очищен';
+  if(pval){
+    document.getElementById('progress-sync-result').textContent='Синхронизирую…';
+    pullProgress();
+    setTimeout(()=>{const el=document.getElementById('progress-sync-result');if(el)el.textContent='Прогресс подключён ✓';},1500);
+  }
+  setTimeout(()=>{const el=document.getElementById('sheets-test-result');if(el)el.textContent='';},2000);
   document.getElementById('settings-overlay').classList.remove('open');
 }
 function clearSheetsUrl(){
@@ -3266,6 +3336,7 @@ function renderCard(){
 }
 
 function renderDone(){
+  pushProgress(); // sync progress to cloud at end of session
   const total=okCount+badCount;
   const pct=total?Math.round(okCount/total*100):0;
   const sheetLink=sheetsUrl?`<a class="icon-btn" href="${sheetsUrl.replace('/exec','')}" target="_blank" style="text-decoration:none">📊 Открыть таблицу</a>`:'';

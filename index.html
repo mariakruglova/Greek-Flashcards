@@ -2498,15 +2498,15 @@ function pullProgress(){
     .catch(()=>{}); // offline: keep local, will sync later
 }
 function pushProgress(){
-  if(!progressUrl) return;
-  // no-cors: request goes through (like the working log-sync), but we can't read
-  // the response. That's fine — next pullProgress() on startup adopts the merged copy.
-  fetch(progressUrl,{
+  if(!progressUrl) return Promise.resolve();
+  // Apps Script redirects POST to googleusercontent; must follow redirect.
+  // Plain fetch (not no-cors) so the request body actually reaches the script.
+  return fetch(progressUrl,{
     method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain'}, // text/plain avoids CORS preflight
+    redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // text/plain avoids preflight
     body:JSON.stringify(wordStats)
-  }).catch(()=>{});
+  }).then(r=>r.text()).catch(()=>{});
 }
 /* ── manual sync diagnostic: shows exactly what's set and tries a live push+pull ── */
 function diagnoseSync(){
@@ -2522,19 +2522,21 @@ function diagnoseSync(){
   }
   report+='\nОтправляю тестовый POST и читаю облако…';
   out.textContent=report;
-  pushProgress();
-  fetch(progressUrl,{method:'GET'})
-    .then(r=>r.text())
-    .then(t=>{
-      let n='?';
-      try{n=Object.keys(JSON.parse(t)).length;}catch(e){}
-      out.textContent=report+'\n✓ Облако ответило. Слов в облаке: '+n+
-        '\n(первые 60: '+t.slice(0,60)+')'+
-        (n>0&&t.indexOf('ТЕСТ')<0?'\n\n✅ Синк работает!':'\n\n(если тут ТЕСТ или 0 — POST не долетел)');
-    })
-    .catch(e=>{
-      out.textContent=report+'\n❌ GET к облаку упал: '+e+'\nПроверь, что URL заканчивается на /exec';
-    });
+  pushProgress().then(()=>{
+    // small delay so the sheet write settles, then read back
+    setTimeout(()=>{
+      fetch(progressUrl,{method:'GET'})
+        .then(r=>r.text())
+        .then(t=>{
+          let n='?';
+          try{n=Object.keys(JSON.parse(t)).length;}catch(e){}
+          out.textContent=report+'\n✓ Облако ответило. Слов в облаке: '+n+
+            '\n(первые 60: '+t.slice(0,60)+')'+
+            (n>0&&t.indexOf('ТЕСТ')<0?'\n\n✅ Синк работает!':'\n\n(если 0 или ТЕСТ — POST всё ещё не долетает)');
+        })
+        .catch(e=>{out.textContent=report+'\n❌ GET упал: '+e;});
+    },1200);
+  });
 }
 
 /* ── sync dot ── */

@@ -300,6 +300,8 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <p style="font-size:12px;color:var(--text3);margin-bottom:6px">Отдельный веб-апп из файла <code>apps_script_progress.gs</code>. Прогресс (что выучено/умею писать/аорист) будет один на телефоне и компьютере.</p>
       <input type="text" id="progress-url-input" placeholder="URL синка прогресса …/exec">
       <div id="progress-sync-result" style="font-size:12px;margin-top:4px"></div>
+      <button onclick="diagnoseSync()" style="font-size:12px;padding:5px 10px;margin-top:6px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text2);cursor:pointer">🔍 Проверить синхронизацию</button>
+      <div id="sync-diag" style="font-size:11px;margin-top:6px;font-family:monospace;white-space:pre-wrap;color:var(--text3)"></div>
     </div>
     <div class="modal-btns">
       <button onclick="clearSheetsUrl()">Сбросить</button>
@@ -2506,11 +2508,39 @@ function pushProgress(){
     body:JSON.stringify(wordStats)
   }).catch(()=>{});
 }
+/* ── manual sync diagnostic: shows exactly what's set and tries a live push+pull ── */
+function diagnoseSync(){
+  const out=document.getElementById('sync-diag');
+  const nWords=Object.keys(wordStats).length;
+  let report='';
+  report+='progressUrl в памяти: '+(progressUrl?('ЕСТЬ ('+progressUrl.slice(0,40)+'…)'):'ПУСТО ⚠️')+'\n';
+  report+='в localStorage: '+((lsGet('greek_progress_url')||'')?'ЕСТЬ':'ПУСТО ⚠️')+'\n';
+  report+='слов в прогрессе локально: '+nWords+'\n';
+  if(!progressUrl){
+    report+='\n⚠️ URL пустой. Вставь URL в поле выше и нажми Сохранить.';
+    out.textContent=report; return;
+  }
+  report+='\nОтправляю тестовый POST и читаю облако…';
+  out.textContent=report;
+  pushProgress();
+  fetch(progressUrl,{method:'GET'})
+    .then(r=>r.text())
+    .then(t=>{
+      let n='?';
+      try{n=Object.keys(JSON.parse(t)).length;}catch(e){}
+      out.textContent=report+'\n✓ Облако ответило. Слов в облаке: '+n+
+        '\n(первые 60: '+t.slice(0,60)+')'+
+        (n>0&&t.indexOf('ТЕСТ')<0?'\n\n✅ Синк работает!':'\n\n(если тут ТЕСТ или 0 — POST не долетел)');
+    })
+    .catch(e=>{
+      out.textContent=report+'\n❌ GET к облаку упал: '+e+'\nПроверь, что URL заканчивается на /exec';
+    });
+}
 
 /* ── sync dot ── */
 function updateSyncDot(){
   const dot=document.getElementById('sync-dot');
-  dot.className='sync-dot'+((sheetsUrl||progressUrl)?'ok':'');
+  dot.className='sync-dot'+((sheetsUrl||progressUrl)?' ok':'');
 }
 function dotSending(){
   const d=document.getElementById('sync-dot');
@@ -2603,23 +2633,34 @@ function closeSettings(e){
   }
 }
 function saveSheetsUrl(){
-  const val=document.getElementById('sheets-url-input').value.trim();
-  sheetsUrl=val;
-  lsSet('greek_sheets_url',val);
-  // progress sync URL
-  const pval=(document.getElementById('progress-url-input')?.value||'').trim();
+  // progress URL first & guarded — this is the important one
+  const pin=document.getElementById('progress-url-input');
+  const pval=(pin&&pin.value||'').trim();
   progressUrl=pval;
   lsSet('greek_progress_url',pval);
+  // log sync URL (optional)
+  const sin=document.getElementById('sheets-url-input');
+  const val=(sin&&sin.value||'').trim();
+  sheetsUrl=val;
+  lsSet('greek_sheets_url',val);
   updateSyncDot();
   const res=document.getElementById('sheets-test-result');
-  res.textContent=val?'URL сохранён ✓':'URL очищен';
-  if(pval){
-    document.getElementById('progress-sync-result').textContent='Синхронизирую…';
-    pullProgress();
-    setTimeout(()=>{const el=document.getElementById('progress-sync-result');if(el)el.textContent='Прогресс подключён ✓';},1500);
+  if(res) res.textContent=val?'URL лога сохранён ✓':'';
+  const pres=document.getElementById('progress-sync-result');
+  if(pres){
+    if(pval){
+      pres.textContent='✓ Прогресс подключён. Синхронизирую…';
+      pres.style.color='#22c55e';
+      pullProgress();
+      setTimeout(()=>{if(pres)pres.textContent='✓ Готово. URL: '+pval.slice(0,45)+'…';},1500);
+    } else {
+      pres.textContent='⚠️ Поле пустое — URL не сохранён';
+      pres.style.color='#ef4444';
+    }
   }
-  setTimeout(()=>{const el=document.getElementById('sheets-test-result');if(el)el.textContent='';},2000);
-  document.getElementById('settings-overlay').classList.remove('open');
+  setTimeout(()=>{const el=document.getElementById('sheets-test-result');if(el)el.textContent='';},3000);
+  // keep modal open a moment so you can read the status; close after
+  setTimeout(()=>{const ov=document.getElementById('settings-overlay');if(ov)ov.classList.remove('open');},pval?2200:0);
 }
 function clearSheetsUrl(){
   sheetsUrl='';

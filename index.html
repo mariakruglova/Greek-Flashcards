@@ -2536,7 +2536,7 @@ function diagnoseSync(){
     report+='\n⚠️ URL пустой. Вставь URL в поле выше и нажми Сохранить.';
     out.textContent=report; return;
   }
-  report+='\nОтправляю тестовый POST и читаю облако…';
+  report+='\nОтправляю прогресс и читаю облако…';
   out.textContent=report;
   pushProgress().then(()=>{
     // small delay so the sheet write settles, then read back

@@ -2499,14 +2499,30 @@ function pullProgress(){
 }
 function pushProgress(){
   if(!progressUrl) return Promise.resolve();
-  // Apps Script redirects POST to googleusercontent; must follow redirect.
-  // Plain fetch (not no-cors) so the request body actually reaches the script.
-  return fetch(progressUrl,{
-    method:'POST',
-    redirect:'follow',
-    headers:{'Content-Type':'text/plain;charset=utf-8'}, // text/plain avoids preflight
-    body:JSON.stringify(wordStats)
-  }).then(r=>r.text()).catch(()=>{});
+  // POST doesn't reach Apps Script here (confirmed). Send via GET param instead.
+  // Only words with progress; chunk by URL size so each request fits (~6000 chars).
+  const touched={};
+  for(const k in wordStats){
+    const s=wordStats[k];
+    if(s&&(s.seen||s.wSeen||s.aSeen)) touched[k]=s;
+  }
+  const keys=Object.keys(touched);
+  if(!keys.length) return Promise.resolve();
+  const sep=progressUrl.indexOf('?')<0?'?':'&';
+  // build chunks that stay under limit
+  const chunks=[]; let cur={}, curLen=0;
+  for(const k of keys){
+    const piece=JSON.stringify({[k]:touched[k]});
+    const pieceLen=encodeURIComponent(piece).length;
+    if(curLen+pieceLen>5500 && Object.keys(cur).length){ chunks.push(cur); cur={}; curLen=0; }
+    cur[k]=touched[k]; curLen+=pieceLen;
+  }
+  if(Object.keys(cur).length) chunks.push(cur);
+  // send chunks sequentially (merge is additive server-side)
+  return chunks.reduce((p,chunk)=>p.then(()=>{
+    const u=progressUrl+sep+'data='+encodeURIComponent(JSON.stringify(chunk));
+    return fetch(u,{method:'GET'}).then(r=>r.text()).catch(()=>{});
+  }),Promise.resolve());
 }
 /* ── manual sync diagnostic: shows exactly what's set and tries a live push+pull ── */
 function diagnoseSync(){

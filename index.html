@@ -2255,12 +2255,105 @@ const AORIST={
  'καλώ':'κάλεσα','κλείνω':'έκλεισα','ανοίγω':'άνοιξα','γυρίζω':'γύρισα',
  'δοκιμάζω':'δοκίμασα','κανονίζω':'κανόνισα','γνωρίζω':'γνώρισα','τελειώνω':'τελείωσα',
  'βοηθάω':'βοήθησα','παίζω':'έπαιξα','χάνω':'έχασα','ζω':'έζησα',
+ 'έχω':'είχα','αγαπάω':'αγάπησα','αγκαλιάζω':'αγκάλιασα','ακούω':'άκουσα',
+ 'ανακατεύω':'ανακάτεψα','ανεβαίνω':'ανέβηκα','αρχίζω':'άρχισα','αφήνω':'άφησα',
+ 'βάζω':'έβαλα','βάφω':'έβαψα','βγάζω':'έβγαλα','βγαίνω':'βγήκα',
+ 'βράζω':'έβρασα','βρέχω':'έβρεξα','βρίσκω':'βρήκα','γυαλίζω':'γυάλισα',
+ 'δένω':'έδεσα','δίνω':'έδωσα','δείχνω':'έδειξα','διαλέγω':'διάλεξα',
+ 'διδάσκω':'δίδαξα','διπλώνω':'δίπλωσα','επιλέγω':'επέλεξα','επισκευάζω':'επισκεύασα',
+ 'επιστρέφω':'επέστρεψα','ετοιμάζω':'ετοίμασα','ζεσταίνω':'ζέστανα','ζηλεύω':'ζήλεψα',
+ 'ζητάω':'ζήτησα','ζωγραφίζω':'ζωγράφισα','θέλω':'θέλησα','καίω':'έκαψα',
+ 'καθαρίζω':'καθάρισα','καπνίζω':'κάπνισα','καταλαβαίνω':'κατάλαβα','καταφέρνω':'κατάφερα',
+ 'κατεβαίνω':'κατέβηκα','κερδίζω':'κέρδισα','κερνάω':'κέρασα','κλαίω':'έκλαψα',
+ 'κοιτάζω':'κοίταξα','κολυμπάω':'κολύμπησα','κοστίζω':'κόστισα','κρατάω':'κράτησα',
+ 'κρεμάω':'κρέμασα','κρυώνω':'κρύωσα','κρύβω':'έκρυψα','λάμπω':'έλαμψα',
+ 'λέω':'είπα','λύνω':'έλυσα','μένω':'έμεινα','μαγειρεύω':'μαγείρεψα',
+ 'μαζεύω':'μάζεψα','μαθαίνω':'έμαθα','μεγαλώνω':'μεγάλωσα','μετακομίζω':'μετακόμισα',
+ 'μετράω':'μέτρησα','μπαίνω':'μπήκα','μυρίζω':'μύρισα','νιώθω':'ένιωσα',
+ 'νοικιάζω':'νοίκιασα','νομίζω':'νόμισα','νυστάζω':'νύσταξα','ξέρω':'ήξερα',
+ 'ξαναπηγαίνω':'ξαναπήγα','ξαπλώνω':'ξάπλωσα','ξεκινάω':'ξεκίνησα','ξενυχτάω':'ξενύχτησα',
+ 'ξετρελαίνω':'ξετρέλανα','παίρνω':'πήρα','παρουσιάζω':'παρουσίασα','περιλαμβάνω':'περιέλαβα',
+ 'περιμένω':'περίμενα','πετάω':'πέταξα','πηγαίνω':'πήγα','πηδάω':'πήδηξα',
+ 'πιστεύω':'πίστεψα','πλένω':'έπλυνα','πλέω':'έπλευσα','πουλάω':'πούλησα',
+ 'προλαβαίνω':'πρόλαβα','προτιμάω':'προτίμησα','ρίχνω':'έριξα','ρουφάω':'ρούφηξα',
+ 'σερβίρω':'σέρβιρα','σπάω':'έσπασα','σπουδάζω':'σπούδασα','στέλνω':'έστειλα',
+ 'στεγνώνω':'στέγνωσα','στρίβω':'έστριψα','συνεχίζω':'συνέχισα','τηγανίζω':'τηγάνισα',
+ 'τρέχω':'έτρεξα','τραγουδάω':'τραγούδησα','υπάρχω':'υπήρξα','φέρνω':'έφερα',
+ 'φεύγω':'έφυγα','φιλάω':'φίλησα','φροντίζω':'φρόντισα','φταίω':'έφταιξα',
+ 'φτιάχνω':'έφτιαξα','φωνάζω':'φώναξα','χαιρετάω':'χαιρέτησα','χαλαρώνω':'χαλάρωσα',
+ 'χαμογελάω':'χαμογέλασα','χαρίζω':'χάρισα','χορεύω':'χόρεψα','χτίζω':'έχτισα',
+ 'χτενίζω':'χτένισα','χτυπάω':'χτύπησα','χωράω':'χώρεσα','ψήνω':'έψησα',
+ 'ψωνίζω':'ψώνισα',
 };
 function hasAorist(w){return AORIST.hasOwnProperty(w[0]);}
+/* ── Aorist person conjugation: generate all 6 forms from 1sg ── */
+const AOR_OVERRIDE={
+  // where the generator's rule fails (verified against Lexigram/Wiktionary)
+  'ήπια':['ήπια','ήπιες','ήπιε','ήπιαμε','ήπιατε','ήπιαν'],
+};
+const AOR_PERSON_LABELS=['я','ты','он/она','мы','вы','они'];
+(function(){
+  const STRIP={'ά':'α','έ':'ε','ή':'η','ί':'ι','ό':'ο','ύ':'υ','ώ':'ω','ΐ':'ι','ΰ':'υ'};
+  const ADD={'α':'ά','ε':'έ','η':'ή','ι':'ί','ο':'ό','υ':'ύ','ω':'ώ'};
+  const VOW='αεηιουω';
+  const DIPH=['αι','ει','οι','υι','ου','αυ','ευ','ηυ'];
+  const stripAcc=s=>s.split('').map(c=>STRIP[c]||c).join('');
+  const isV=c=>VOW.indexOf(stripAcc(c))>=0;
+  function nuclei(word){
+    const ch=word.split(''),n=ch.length,res=[];let i=0;
+    while(i<n){
+      const c=ch[i];
+      if(isV(c)){
+        if(i+1<n&&isV(ch[i+1])&&DIPH.indexOf(stripAcc(c)+stripAcc(ch[i+1]))>=0){
+          const acc=(c!==stripAcc(c))||(ch[i+1]!==stripAcc(ch[i+1]));
+          res.push([i,acc,2]);i+=2;continue;
+        }
+        res.push([i,(c!==stripAcc(c)),1]);i++;continue;
+      }
+      i++;
+    }
+    return res;
+  }
+  function accentFromEnd(word){
+    const nu=nuclei(word);
+    for(let k=0;k<nu.length;k++) if(nu[k][1]) return nu.length-k;
+    return 0;
+  }
+  function setAccent(word,syllFromEnd){
+    const s=stripAcc(word),nu=nuclei(s);
+    if(!nu.length||syllFromEnd<1||syllFromEnd>nu.length) return s;
+    const item=nu[nu.length-syllFromEnd];
+    const idx=item[0],ln=item[2];
+    const ch=s.split('');
+    const vi=idx+(ln===2?1:0);
+    ch[vi]=ADD[ch[vi]]||ch[vi];
+    return ch.join('');
+  }
+  window.conjugateAorist=function(a1){
+    if(AOR_OVERRIDE[a1]) return AOR_OVERRIDE[a1].slice();
+    const accPos=accentFromEnd(a1);
+    const nu1=nuclei(a1),total1=nu1.length;
+    const hasAug=('έή'.indexOf(a1[0])>=0)&&total1>=2;
+    const stem=stripAcc(a1).slice(0,-1);
+    function build(ending,plural){
+      const raw=stem+ending, nu=nuclei(raw), tot=nu.length;
+      if(!plural) return setAccent(raw,accPos);
+      let res=setAccent(raw,Math.min(3,tot));
+      if(hasAug){
+        const rn=nuclei(res);let accNuc=-1;
+        for(let k=0;k<rn.length;k++) if(rn[k][1]){accNuc=k;break;}
+        if(accNuc!==0&&'εη'.indexOf(res[0])>=0) res=res.slice(1);
+      }
+      return res;
+    }
+    return [a1,build('ες',false),build('ε',false),build('αμε',true),build('ατε',true),build('αν',false)];
+  };
+})();
 const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','ен12':'Ενότητα 12','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','доп_глаголы':'📝 Учитель: глаголы','доп_существительные':'📝 Учитель: существительные','доп_прилагательные':'📝 Учитель: прилагательные','доп_наречия':'📝 Учитель: наречия','доп_выражения':'📝 Учитель: выражения','доп_вопросительные':'📝 Учитель: вопросит.','доп_числа':'📝 Учитель: числа','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','книга_платон':'📖 Θείος Πλάτων (книга)','предложения':'Предложения'};
 
 /* ── state ── */
 let deck=[],idx=0,mode='gr-ru',okCount=0,badCount=0,checked=false,streak=0,retriedKeys=new Set();
+let curAoristPerson=0;
 let progressUrl='';
 let wordStats={};  // {greek: {seen,correct}}
 let sheetsUrl='';
@@ -3285,28 +3378,32 @@ function checkWord(w){
   if(checked) return;
   checked=true;
   const cm=cardMode(w);
-  const a=cm==='aorist'?(AORIST[w[0]]||''):(cm==='gr-ru'?w[1]:w[0]);
+  const aorForms=cm==='aorist'?conjugateAorist(AORIST[w[0]]||''):null;
+  const a=cm==='aorist'?(aorForms[curAoristPerson]||''):(cm==='gr-ru'?w[1]:w[0]);
   const input=document.getElementById('answer-input');
   const userVal=input.value.trim();
   if(!userVal) return;
   const ex=w[3]&&w[3]!=='s'?`<span class="ex">${w[3]}</span>`:'';
 
   if(cm==='aorist'){
-    // AORIST MODE: write past tense, graded soft, records to aorist counter
-    const r=evalWriting(userVal,a);
+    // AORIST MODE: write the form for the asked person. Check LETTERS (accent-insensitive),
+    // but always SHOW the correct form WITH accent so the learner sees stress placement.
+    const r=evalWriting(userVal,a); // evalWriting already treats accent as "close"
+    const personLbl=AOR_PERSON_LABELS[curAoristPerson];
+    const shown=`<span class="correct-ans">${w[0]} → ${a}</span> <span style="color:var(--text3)">(${personLbl})</span>`;
     if(r.level==='exact'){
       recordAorist(w[0],true);
       input.className='ok';
-      document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно! <span class="correct-ans">${w[0]} → ${a}</span></div>`;
+      document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно! ${shown}</div>`;
     } else if(r.level==='close'){
       recordAorist(w[0],true);
       input.className='close';
       const why=r.accentOnly?'почти — следи за ударением':'почти — маленькая опечатка';
-      document.getElementById('feedback').innerHTML=`<div class="feedback close">${why}. Правильно: <span class="correct-ans">${a}</span></div>`;
+      document.getElementById('feedback').innerHTML=`<div class="feedback close">${why}. Правильно: ${shown}</div>`;
     } else {
       recordAorist(w[0],false);
       input.className='bad';
-      document.getElementById('feedback').innerHTML=`<div class="feedback bad">Аорист: <span class="correct-ans">${a}</span> <span style="color:var(--text3)">(${w[0]})</span></div>`;
+      document.getElementById('feedback').innerHTML=`<div class="feedback bad">Аорист «${personLbl}»: ${shown}</div>`;
     }
     document.getElementById('check-btn').textContent='Далее →';
     return;
@@ -3409,9 +3506,11 @@ function renderCard(){
   const cm=cardMode(w);
   const isSent=isSentence(w);
   const isAorist=(cm==='aorist');
+  // pick a random person (0..5) for this aorist card
+  if(isAorist){ curAoristPerson=Math.floor(Math.random()*6); }
   const q=isAorist?w[0]:(cm==='gr-ru'?w[0]:w[1]);
-  const placeholder=isSent?'Напиши по-гречески...':isAorist?'Напиши аорист (прош. время)...':cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
-  const hint=isAorist?`→ аорист · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
+  const placeholder=isSent?'Напиши по-гречески...':isAorist?`Напиши аорист: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
+  const hint=isAorist?`→ аорист, лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
   const tagLabel=isSent?'предложение':tagOf(w[2]).replace(/ен(\d)/,'ενότητα $1').replace('алфавит','Αλφάβητο').replace('введение','Εισαγωγή');
   const st=wordStats[w[0]];
   const status=getStatus(w[0]);

@@ -2896,10 +2896,25 @@ function loadPersisted(){
   progressUrl=lsGet('greek_progress_url')||'';
   updateSyncDot();
   try{wordStats=JSON.parse(lsGet('greek_word_stats')||'{}');}catch(e){wordStats={};}
+  sanitizeWordStats();
   loadCustomWords();
   if(progressUrl) pullProgress(); // fetch cloud copy on startup, merge in
 }
 function saveWordStats(){lsSet('greek_word_stats',JSON.stringify(wordStats));}
+/* ── guard against NaN: coerce every counter to a finite number ── */
+function num(v){const n=Number(v);return Number.isFinite(n)&&n>=0?n:0;}
+function sanitizeWordStats(){
+  for(const k in wordStats){
+    const s=wordStats[k];
+    if(!s||typeof s!=='object'){delete wordStats[k];continue;}
+    s.seen=num(s.seen); s.correct=num(s.correct); s.sessions=num(s.sessions);
+    if(s.wSeen!==undefined||s.wCorrect!==undefined){s.wSeen=num(s.wSeen);s.wCorrect=num(s.wCorrect);s.wSessions=num(s.wSessions);}
+    if(s.aSeen!==undefined||s.aCorrect!==undefined){s.aSeen=num(s.aSeen);s.aCorrect=num(s.aCorrect);s.aSessions=num(s.aSessions);}
+    if(s.correct>s.seen) s.correct=s.seen;          // impossible ratio → clamp
+    if(s.wCorrect>s.wSeen) s.wCorrect=s.wSeen;
+    if(s.aCorrect>s.aSeen) s.aCorrect=s.aSeen;
+  }
+}
 
 /* ── Progress sync between devices (separate Apps Script, blob in one cell) ── */
 function mergeProgressMax(local,cloud){
@@ -2927,6 +2942,7 @@ function pullProgress(){
     .then(cloud=>{
       if(cloud&&typeof cloud==='object'){
         wordStats=mergeProgressMax(wordStats,cloud);
+        sanitizeWordStats();
         saveWordStats();
         if(typeof updateProgress==='function') updateProgress();
       }
@@ -3129,8 +3145,8 @@ function openStats(){
   const entries=Object.entries(wordStats);
   if(!entries.length){el.innerHTML='<p style="color:var(--text3);font-size:14px">Ещё нет статистики — начни заниматься!</p>';
   } else {
-    const total=entries.reduce((s,[,v])=>s+v.seen,0);
-    const totalOk=entries.reduce((s,[,v])=>s+v.correct,0);
+    const total=entries.reduce((s,[,v])=>s+num(v.seen),0);
+    const totalOk=entries.reduce((s,[,v])=>s+num(v.correct),0);
     const acc=total?Math.round(totalOk/total*100):0;
     const allWords=ALL_DATA.filter(w=>!isSentence(w)&&!w[2].startsWith('еда')&&!w[2].startsWith('книга'));
     const knowCount=allWords.filter(w=>getStatus(w[0])==='learned').length;      // знаю перевод
@@ -3149,7 +3165,7 @@ function openStats(){
       if(!sections[t]) sections[t]={seen:0,correct:0,total:0};
       sections[t].total++;
       const st=wordStats[w[0]];
-      if(st){sections[t].seen+=st.seen;sections[t].correct+=st.correct;}
+      if(st){sections[t].seen+=num(st.seen);sections[t].correct+=num(st.correct);}
     });
 
     const weak=entries
@@ -3180,12 +3196,12 @@ function openStats(){
         📝 Предложения (узнавание): <strong style="color:var(--text2)">${sentKnown} / ${allSents.length}</strong> — считаются отдельно
       </div>`;
     // Show sections in a fixed order
-    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','клик1','клик2','доп_глаголы','доп_существительные','доп_прилагательные','доп_наречия','доп_выражения','доп_вопросительные','доп_числа','книга_платон','предложения'];
+    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','ен13','клик1','клик2','доп_глаголы','доп_существительные','доп_прилагательные','доп_наречия','доп_выражения','доп_вопросительные','доп_числа','еда','мои_слова','книга_платон','предложения'];
     let sectHtml='<div class="section-bars">';
     for(const tag of sectionOrder){
       const v=sections[tag];
       if(!v||!v.total) continue;
-      const pct=v.seen>0?Math.round(v.correct/v.seen*100):0;
+      const pct=(v.seen>0&&Number.isFinite(v.correct))?Math.round(num(v.correct)/num(v.seen)*100):0;
       // writing-mastered count for this section
       const secWords=ALL_DATA.filter(w=>tagOf(w[2])===tag&&!isSentence(w));
       const wMastered=secWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
@@ -3203,7 +3219,7 @@ function openStats(){
       weakHtml=`<p style="font-size:13px;font-weight:500;margin:1rem 0 .5rem">Слабые слова (видела ≥2 раза):</p>
       <ul class="weak-list">`;
       for(const [greek,v] of weak){
-        const pct=Math.round(v.correct/v.seen*100);
+        const pct=v.seen?Math.round(num(v.correct)/num(v.seen)*100):0;
         weakHtml+=`<li><span>${greek}</span><span class="weak-acc">${pct}% (${v.correct}/${v.seen})</span></li>`;
       }
       weakHtml+='</ul>';

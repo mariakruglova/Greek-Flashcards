@@ -3164,12 +3164,13 @@ function openStats(){
       const t=tagOf(w[2]);
       if(!sections[t]) sections[t]={seen:0,correct:0,total:0};
       sections[t].total++;
-      const st=wordStats[w[0]];
-      if(st){sections[t].seen+=num(st.seen);sections[t].correct+=num(st.correct);}
+      const c=modeCounters(w[0],mode);
+      sections[t].seen+=c.seen; sections[t].correct+=c.correct;
     });
 
     const weak=entries
-      .filter(([,v])=>v.seen>=2)
+      .map(([k])=>[k,modeCounters(k,mode)])
+      .filter(([,v])=>v.seen>=2&&v.correct<v.seen)
       .sort(([,a],[,b])=>(a.correct/a.seen)-(b.correct/b.seen))
       .slice(0,10);
 
@@ -3205,7 +3206,7 @@ function openStats(){
       // writing-mastered count for this section
       const secWords=ALL_DATA.filter(w=>tagOf(w[2])===tag&&!isSentence(w));
       const wMastered=secWords.filter(w=>getWriteStatus(w[0])==='mastered').length;
-      const wLabel=wMastered>0?` <span style="font-size:10px;color:#d4a017">✍️${wMastered}</span>`:'';
+      const wLabel=(mode!=='ru-gr'&&wMastered>0)?` <span style="font-size:10px;color:#d4a017">✍️${wMastered}</span>`:'';
       const wordsLabel=v.seen>0?`${pct}%${wLabel}`:`0% <span style="font-size:10px;color:var(--text3)">(${v.total} сл.)</span>`;
       sectHtml+=`<div class="section-bar">
         <div class="bar-label"><span>${sectionLabels[tag]||tag}</span><span>${wordsLabel}</span></div>
@@ -3232,7 +3233,7 @@ function openStats(){
         <div class="stat-card"><div class="label">Слов изучено</div><div class="value">${entries.length}</div></div>
         <div class="stat-card"><div class="label">Слов в базе</div><div class="value">${ALL_DATA.length}</div></div>
       </div>
-      <p style="font-size:13px;font-weight:500;margin-bottom:.5rem">По разделам:</p>
+      <p style="font-size:13px;font-weight:500;margin-bottom:.5rem">По разделам <span style="font-weight:400;color:var(--text3)">— режим «${modeLabel(mode)}»</span>:</p>
       ${sectHtml}
       ${weakHtml}
     `;
@@ -3400,6 +3401,21 @@ function isMasteredForMode(key,m){
   if(m==='aorist') return getAoristStatus(key)==='mastered';
   return m==='ru-gr' ? getWriteStatus(key)==='mastered' : getStatus(key)==='learned';
 }
+/* ── counters/status for the mode actually being practised ──
+   Recognition writes seen/correct, writing writes wSeen/wCorrect,
+   aorist writes aSeen/aCorrect. The card badge must read the right pair,
+   otherwise every card stays «новое» forever in writing/aorist mode. */
+function modeCounters(key,m){
+  const s=wordStats[key]||{};
+  if(m==='ru-gr')  return {seen:num(s.wSeen),correct:num(s.wCorrect)};
+  if(m==='aorist') return {seen:num(s.aSeen),correct:num(s.aCorrect)};
+  return {seen:num(s.seen),correct:num(s.correct)};
+}
+function modeStatus(key,m){
+  if(isMasteredForMode(key,m)) return 'learned';
+  return modeCounters(key,m).seen>0 ? 'learning' : 'new';
+}
+function modeLabel(m){return m==='ru-gr'?'Рус → Греч':m==='aorist'?'Аорист':'Греч → Рус';}
 
 /* ── answer variants helper (supports "a / b (note)" → ["a","b"]) ── */
 function matchAnswer(userVal,answer){
@@ -3543,7 +3559,7 @@ function updateDropdownPct(){
     if(!f||['all','words','предложения','слабые','учу','выученные','новые','все_числа','все_глаголы'].includes(f)) continue;
     const sectionWords=ALL_DATA.filter(w=>tagOf(w[2])===f&&!isSentence(w));
     if(!sectionWords.length) continue;
-    const learned=sectionWords.filter(w=>getStatus(w[0])==='learned').length;
+    const learned=sectionWords.filter(w=>isMasteredForMode(w[0],mode)).length;
     const pct=Math.round(learned/sectionWords.length*100);
     const base=opt.dataset.base||(opt.dataset.base=opt.text);
     opt.text=base+(pct>0?' ✓'+pct+'%':'');
@@ -3819,13 +3835,13 @@ function renderCard(){
   const placeholder=isSent?'Напиши по-гречески...':isAorist?`Напиши аорист: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
   const hint=isAorist?`→ аорист, лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
   const tagLabel=isSent?'предложение':tagOf(w[2]).replace(/ен(\d)/,'ενότητα $1').replace('алфавит','Αλφάβητο').replace('введение','Εισαγωγή');
-  const st=wordStats[w[0]];
-  const status=getStatus(w[0]);
+  const mc=modeCounters(w[0],cm);
+  const status=modeStatus(w[0],cm);
   const statusBadge=isSent?'':
     status==='learned'?'<span class="status-badge status-learned">✓ выучено</span>':
-    status==='learning'&&st?`<span class="status-badge status-learning">✦${st.correct}/${st.seen}</span>`:
+    status==='learning'?`<span class="status-badge status-learning">✦${mc.correct}/${mc.seen}</span>`:
     '<span class="status-badge status-new">новое</span>';
-  const histBadge=st&&st.seen>0?`<span style="font-size:11px;color:var(--text3);margin-left:4px">(${Math.round(st.correct/st.seen*100)}%)</span>`:'';
+  const histBadge=mc.seen>0?`<span style="font-size:11px;color:var(--text3);margin-left:4px">(${Math.round(mc.correct/mc.seen*100)}%)</span>`:'';
   const inputEl=isSent?
     `<textarea id="answer-input" rows="2" placeholder="${placeholder}" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1;font-size:15px;padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;font-family:inherit;line-height:1.5;outline:none"></textarea>`:
     `<input id="answer-input" type="text" placeholder="${placeholder}" autocomplete="off" autocorrect="off" spellcheck="false"/>`;

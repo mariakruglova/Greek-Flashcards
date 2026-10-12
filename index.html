@@ -163,6 +163,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
     <button class="mode-btn" id="btn-ru-gr" onclick="setMode('ru-gr')">✍️ Рус → Греч</button>
     <button class="mode-btn" id="btn-aorist" onclick="setMode('aorist')">⏮ Аорист</button>
     <button class="mode-btn" id="btn-future" onclick="setMode('future')">⏭ Будущее</button>
+    <button class="mode-btn" id="btn-imper" onclick="setMode('imper')">❗ Повелительное</button>
     <button class="mode-btn" id="btn-match" onclick="setMode('match')">🧩 Пары</button>
     <select id="tag-filter" onchange="applyFilter()">
       <option value="all">Все разделы</option>
@@ -180,6 +181,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <option value="глаголы_Б1">Глаголы Тип Б1 (-άω)</option>
       <option value="глаголы_Б2">Глаголы Тип Б2 (-ώ)</option>
       <option value="глаголы_Г">Глаголы Тип Γ (-ομαι)</option>
+      <option value="глаголы_17">❗ Повелительное: глаголы из таблицы (Ενότητα 17)</option>
       <option value="алфавит">Αλφάβητο — алфавит</option>
       <option value="введение">Εισαγωγή — введение</option>
       <option value="ен1">Ενότητα 1 — Γεια σας</option>
@@ -196,6 +198,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <option value="ен14">Ενότητα 14 — Τι θα κάνουμε;</option>
       <option value="ен15">Ενότητα 15 — Πάμε πάλι!</option>
       <option value="ен16">Ενότητα 16 — Πάμε βόλτα;</option>
+      <option value="ен17">Ενότητα 17 — Πάμε για δουλειά</option>
       <option value="клик1">📗 ΚΛΙΚ Ενότητα 1 — Εγώ και οι άλλοι</option>
       <option value="клик2">📗 ΚΛΙΚ Ενότητα 2 — Ώρα για διαφημίσεις</option>
       <option value="доп_глаголы">📝 Учитель: глаголы</option>
@@ -2269,7 +2272,7 @@ const ALL=[
 ["η καρέκλα", "стул", "ен13_существительные", "Ένα τραπέζι με τέσσερις καρέκλες."],
 ["το στερεοφωνικό", "стереосистема", "ен13_существительные", "Πήρε το στερεοφωνικό με όλα της τα cd."],
 ["το συγκρότημα", "группа (музыкальная)", "ен13_существительные", "Αφίσες με ροκ συγκροτήματα."],
-["η συνέντευξη", "интервью", "ен13_существительные", "Μια δημοσιογράφος μου παίρνει συνέντευξη."],
+["η συνέντευξη", "интервью / собеседование", "ен13_существительные", "Μια δημοσιογράφος μου παίρνει συνέντευξη."],
 ["το χέρι", "рука", "ен13_существительные", "Έσπασα το χέρι μου."],
 ["ο ποιητής", "поэт", "ен13_существительные", "Ποιος είναι ο πιο γνωστός ποιητής στη χώρα σου;"],
 ["ο στίχος", "строка / стих", "ен13_существительные", "Ένας γνωστός στίχος από ποίημα του Σολωμού."],
@@ -2741,7 +2744,54 @@ const ALL=[
 ["ετοιμάζω τη βαλίτσα", "собирать чемодан", "ен16_выражения", "Αύριο φεύγω, απόψε ετοιμάζω τη βαλίτσα."],
 ["ετοιμάζω τα πράγματά μου", "собирать вещи", "ен16_выражения", "Ετοιμάζω τα πράγματά μου για την εκδρομή."],
 ["σύντομο αλλά περιεκτικό", "кратко, но содержательно", "ен16_выражения", "Το γράμμα σου ήταν σύντομο αλλά περιεκτικό."],
-["τα δικά μου σχέδια", "мои собственные планы", "ен16_выражения", "Έχω τα δικά μου σχέδια για το Σαββατοκύριακο."]
+["τα δικά μου σχέδια", "мои собственные планы", "ен16_выражения", "Έχω τα δικά μου σχέδια για το Σαββατοκύριακο."],
+["το βιογραφικό σημείωμα / το βιογραφικό", "резюме", "ен17_слова", "Στείλτε μας το βιογραφικό σας σημείωμα."],
+["οι μικρές αγγελίες", "объявления (раздел в газете)", "ен17_слова", "Διαβάζω τις μικρές αγγελίες στην εφημερίδα."],
+["υπεύθυνος", "ответственный", "ен17_слова", "Ζητάμε ένα άτομο για μια πολύ υπεύθυνη θέση."],
+["σχετικός", "соответствующий / связанный (с чем-то)", "ен17_слова", "Έχετε σχετική εμπειρία;"],
+["η σχολή", "училище / факультет", "ен17_слова", "Είμαι φοιτητής στη Σχολή Τουριστικών Επαγγελμάτων."],
+["τουριστικός", "туристический", "ен17_слова", "Δουλεύω σε ένα τουριστικό γραφείο."],
+["το επάγγελμα", "профессия", "ен17_слова", "Έχετε προϋπηρεσία σε αυτό το επάγγελμα;"],
+["η προϋπηρεσία", "стаж / опыт работы", "ен17_слова", "Είχες προϋπηρεσία;"],
+["το έτος", "год (офиц.) / курс (учёбы)", "ен17_слова", "Είμαι φοιτητής στο τελευταίο έτος."],
+["ο φάκελος", "конверт / папка", "ен17_слова", "Γράψτε στον φάκελο: «Για την αγγελία»."],
+["η επιχείρηση", "предприятие / бизнес", "ен17_слова", "Δουλεύει σε μια μεγάλη επιχείρηση."],
+["ξενοδοχειακός", "гостиничный", "ен17_слова", "Ξενοδοχειακές Επιχειρήσεις Α.Ε."],
+["ξένος", "иностранный / чужой", "ен17_слова", "Ο Φοίβος γνωρίζει τρεις ξένες γλώσσες."],
+["το φαξ", "факс", "ен17_слова", "Θα στείλει το βιογραφικό του με φαξ."],
+["το ονοματεπώνυμο", "имя и фамилия", "ен17_слова", "Γράψτε το ονοματεπώνυμό σας εδώ."],
+["η ημερομηνία γέννησης", "дата рождения", "ен17_слова", "Ημερομηνία γέννησης: 12-05-1987."],
+["η ηλεκτρονική διεύθυνση", "электронный адрес (e-mail)", "ен17_слова", "Ποια είναι η ηλεκτρονική σας διεύθυνση;"],
+["οι σπουδές", "учёба / образование", "ен17_слова", "Τελείωσα τις σπουδές μου πέρυσι."],
+["επαγγελματικός", "профессиональный", "ен17_слова", "Έχω επαγγελματική εμπειρία σε ξενοδοχείο."],
+["οι γνώσεις", "знания", "ен17_слова", "Γνώσεις ηλεκτρονικού υπολογιστή: πολύ καλές."],
+["ο ηλεκτρονικός υπολογιστής", "компьютер (полное название)", "ен17_слова", "Έχω δίπλωμα ηλεκτρονικού υπολογιστή."],
+["τα ενδιαφέροντα", "интересы / увлечения", "ен17_слова", "Ενδιαφέροντα: μουσική, ταξίδια."],
+["ο γνωστός", "знакомый (человек)", "ен17_слова", "Ρωτάω φίλους και γνωστούς για δουλειά."],
+["το μάρκετινγκ", "маркетинг", "ен17_слова", "Έκανα ένα σεμινάριο στο ξενοδοχειακό μάρκετινγκ."],
+["η απασχόληση", "занятость / работа", "ен17_слова", "Ο ΟΑΕΔ είναι ο Οργανισμός Απασχόλησης Εργατικού Δυναμικού."],
+["ο ΟΑΕΔ", "служба занятости (в Греции)", "ен17_слова", "Πάω στον ΟΑΕΔ για να βρω δουλειά."],
+["άριστα", "отлично", "ен17_слова", "Αγγλικά: άριστα."],
+["ο καύσωνας", "сильная жара / зной", "ен17_слова", "Έχει καύσωνα, ανάψτε το κλιματιστικό!"],
+["φυσάει", "дует ветер", "ен17_слова", "Φυσάει σήμερα, μην ανοίγετε τα παράθυρα."],
+["χιονίζει", "идёт снег", "ен17_слова", "Χιονίζει! Φορέστε ζεστά ρούχα."],
+["ενδιαφέρομαι (για)", "интересоваться (чем-то)", "ен17_глаголы", "Ενδιαφέρομαι για τη θέση υπαλλήλου ρεσεψιόν."],
+["συμπληρώνω", "заполнять / дополнять", "ен17_глаголы", "Συμπληρώνω την αίτηση."],
+["τηλεφωνώ για μια αγγελία", "звонить по объявлению", "ен17_выражения", "Τηλεφωνώ για την αγγελία σας στα «Νέα»."],
+["ψάχνω για δουλειά", "искать работу", "ен17_выражения", "Ο Φοίβος ψάχνει για δουλειά."],
+["στέλνω βιογραφικό", "отправлять резюме", "ен17_выражения", "Έστειλα βιογραφικό σε τρεις εταιρείες."],
+["πηγαίνω για συνέντευξη", "идти на собеседование", "ен17_выражения", "Αύριο πηγαίνω για συνέντευξη."],
+["ρωτάω για τον μισθό", "спрашивать о зарплате", "ен17_выражения", "Ρώτα για τον μισθό!"],
+["Λέγετε, παρακαλώ.", "Слушаю вас (по телефону).", "ен17_выражения", "— Λέγετε, παρακαλώ. — Καλημέρα, τηλεφωνώ για την αγγελία."],
+["Να σας πω.", "Скажу вам так. / Дело в том, что…", "ен17_выражения", "Να σας πω. Είμαι φοιτητής στο τελευταίο έτος."],
+["Πείτε μου κάτι.", "Расскажите мне что-нибудь (о себе).", "ен17_выражения", "Πείτε μου κάτι. Έχετε σχετική εμπειρία;"],
+["Κοιτάξτε.", "Послушайте. / Видите ли.", "ен17_выражения", "Κοιτάξτε, κύριε Οικονόμου, είμαστε μια μεγάλη εταιρεία."],
+["Προσέξτε με.", "Послушайте меня внимательно.", "ен17_выражения", "Προσέξτε με λοιπόν. Στείλτε μας το βιογραφικό σας."],
+["Καλή σας μέρα.", "Хорошего вам дня.", "ен17_выражения", "Σας ευχαριστώ πολύ. Καλή σας μέρα."],
+["έχει καύσωνα", "стоит сильная жара", "ен17_выражения", "Έχει καύσωνα σήμερα, 45 βαθμούς!"],
+["έχει πολύ ήλιο", "очень солнечно", "ен17_выражения", "Έχει πολύ ήλιο, βάλε καπέλο!"],
+["Τι να κάνω;", "Что мне делать?", "ен17_выражения", "Κάνει ζέστη. Τι να κάνω; — Άνοιξε το παράθυρο."],
+["Για δες.", "Посмотри-ка.", "ен17_выражения", "Για δες, τι ωραίο βιογραφικό!"]
 ];
 const SENTENCES=[
 ["Με είδες στον δρόμο;","Ты видел меня на улице?","предложения"],
@@ -2807,12 +2857,16 @@ const SENTENCES=[
 ["Σου πάει πολύ αυτό το παλτό! — Αλήθεια; Νομίζω ότι είναι λίγο μεγάλο.","Тебе очень идёт это пальто! — Правда? Думаю, немного великовато.","предложения"],
 ["Έχω έναν χρόνο που κάνω μαθήματα ελληνικών.", "Я уже год занимаюсь греческим.", "предложения"],
 ["Περπατήσαμε το μονοπάτι.", "Мы прошли по тропинке.", "предложения"],
-["Στους Ρώσους αρέσει πολύ να βγαίνουν σε κονσέρτα.", "Русские очень любят ходить на концерты.", "предложения"]
+["Στους Ρώσους αρέσει πολύ να βγαίνουν σε κονσέρτα.", "Русские очень любят ходить на концерты.", "предложения"],
+["Ενδιαφέρομαι για τη θέση υπαλλήλου ρεσεψιόν.", "Меня интересует должность администратора на ресепшене.", "предложения"],
+["Έχετε σχετική εμπειρία;", "У вас есть соответствующий опыт?", "предложения"],
+["Στείλτε μας το βιογραφικό σας σημείωμα.", "Пришлите нам ваше резюме.", "предложения"],
+["Δούλεψα δύο καλοκαίρια σε ένα ξενοδοχείο στη Χαλκιδική.", "Я проработал два лета в гостинице на Халкидиках.", "предложения"]
 ];
 
 /* ── data plumbing ── */
 function isSentence(w){return w.length===4&&w[3]==='s'||w[2]==='предложения';}
-function tagOf(t){for(const p of['клик1','клик2','ен16','ен15','ен11','ен12','ен13','ен14','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','книга_платон','книга','доп_глаголы','доп_существительные','доп_прилагательные','доп_наречия','доп_выражения','доп_вопросительные','доп_числа','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
+function tagOf(t){for(const p of['клик1','клик2','ен17','ен16','ен15','ен11','ен12','ен13','ен14','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','книга_платон','книга','доп_глаголы','доп_существительные','доп_прилагательные','доп_наречия','доп_выражения','доп_вопросительные','доп_числа','доп','еда','мои_слова'])if(t.startsWith(p))return p;return t;}
 const ALL_DATA=[...ALL.map(w=>[...w,'w']),...SENTENCES.map(w=>[...w,'s'])];
 /* Aorist (past tense) forms, keyed by present-tense verb. Separate from card data
    so it doesn't disturb array indices. Fill in more verbs over time. */
@@ -2830,7 +2884,7 @@ const AORIST={
  'δοκιμάζω':'δοκίμασα','κανονίζω':'κανόνισα','γνωρίζω':'γνώρισα','τελειώνω':'τελείωσα',
  'βοηθάω':'βοήθησα','παίζω':'έπαιξα','χάνω':'έχασα','ζω':'έζησα',
  'έχω':'είχα','αγαπάω':'αγάπησα','αγκαλιάζω':'αγκάλιασα','ακούω':'άκουσα',
- 'ανακατεύω':'ανακάτεψα','ανεβαίνω':'ανέβηκα','ανεβάζω':'ανέβασα','κατεβάζω':'κατέβασα','βαριέμαι':'βαρέθηκα','αρχίζω':'άρχισα','αφήνω':'άφησα',
+ 'συμπληρώνω':'συμπλήρωσα','ανακατεύω':'ανακάτεψα','ανεβαίνω':'ανέβηκα','ανεβάζω':'ανέβασα','κατεβάζω':'κατέβασα','βαριέμαι':'βαρέθηκα','αρχίζω':'άρχισα','αφήνω':'άφησα',
  'βάζω':'έβαλα','βάφω':'έβαψα','βγάζω':'έβγαλα','βγαίνω':'βγήκα',
  'βράζω':'έβρασα','βρέχω':'έβρεξα','βρίσκω':'βρήκα','γυαλίζω':'γυάλισα',
  'δένω':'έδεσα','δίνω':'έδωσα','δείχνω':'έδειξα','διαλέγω':'διάλεξα',
@@ -2906,9 +2960,10 @@ const FUT_IRREG={
   'πάω':'πάω','πηγαίνω':'πάω','ξαναπηγαίνω':'ξαναπάω',
   'βλέπω':'δω','λέω':'πω','τρώω':'φάω','πίνω':'πιω',
   'βρίσκω':'βρω','παίρνω':'πάρω','μπαίνω':'μπω','βγαίνω':'βγω',
-  'ανεβαίνω':'ανέβω','κατεβαίνω':'κατέβω','έρχομαι':'έρθω',
+  'ανεβαίνω':'ανεβώ','κατεβαίνω':'κατεβώ','έρχομαι':'έρθω',
   'έχω':'έχω','ξέρω':'ξέρω','υπάρχω':'υπάρξω',
   'επιλέγω':'επιλέξω','επιστρέφω':'επιστρέψω','κάθομαι':'καθίσω',
+  'καταθέτω':'καταθέσω','περιλαμβάνω':'περιλάβω','παραγγέλνω':'παραγγείλω',
 };
 const FUT_FORMS={
   'πάω':['πάω','πας','πάει','πάμε','πάτε','πάνε'],
@@ -2924,6 +2979,36 @@ const FUT_FORMS={
   'ξέρω':['ξέρω','ξέρεις','ξέρει','ξέρουμε','ξέρετε','ξέρουν'],
 };
 function hasFuture(w){return !!futureOf(w[0]);}
+/* ── ΠΡΟΣΤΑΚΤΙΚΗ (повелительное, Ενότητα 17): строится от основы будущего ──
+   εσύ: основа + ε, ударение на 3-й слог от конца (θα αγοράσω → αγόρασε)
+   εσείς: основа на σ/ξ/ψ/λ/ρ/гласную + τε (αγοράστε, στείλτε, φάτε),
+          иначе + ετε (μάθετε, φύγετε, καταλάβετε)
+   отрицание: μη(ν) + форма будущего без θα (μη διαβάσεις / μη διαβάσετε)
+   " / " внутри формы = допустимые варианты, засчитывается любой. */
+const IMP_IRREG={
+  'πάω':['πήγαινε','πηγαίνετε / πηγαίντε'],'πηγαίνω':['πήγαινε','πηγαίνετε / πηγαίντε'],
+  'βλέπω':['δες','δείτε'],'βρίσκω':['βρες','βρείτε'],'λέω':['πες','πείτε'],'πίνω':['πιες','πιείτε'],
+  'βγαίνω':['βγες','βγείτε'],'μπαίνω':['μπες','μπείτε'],
+  'ανεβαίνω':['ανέβα','ανεβείτε'],'κατεβαίνω':['κατέβα','κατεβείτε'],
+  'έρχομαι':['έλα','ελάτε'],'κάθομαι':['κάθισε / κάτσε','καθίστε'],'γίνομαι':['γίνε','γίνετε'],
+  'τρώω':['φάε','φάτε'],'αφήνω':['άφησε / άσε','αφήστε / άστε'],
+  'περιμένω':['περίμενε','περιμένετε / περιμέντε'],'κάνω':['κάνε','κάνετε / κάντε'],
+  'πλένω':['πλύνε','πλύνετε / πλύντε'],'μένω':['μείνε','μείνετε'],'φέρνω':['φέρε','φέρτε'],
+  'παίρνω':['πάρε','πάρτε'],'καταλαβαίνω':['κατάλαβε','καταλάβετε'],'μαθαίνω':['μάθε','μάθετε'],
+  'φεύγω':['φύγε','φύγετε'],'φτιάχνω':['φτιάξε','φτιάξτε'],
+  'αγκαλιάζω':['αγκάλιασε','αγκαλιάστε'],'νοικιάζω':['νοίκιασε','νοικιάστε'],'νιώθω':['νιώσε','νιώστε'],
+  'ξαναπηγαίνω':['ξαναπήγαινε','ξαναπηγαίνετε'],'σπάω':['σπάσε','σπάστε'],
+};
+// глаголы, у которых повелительное не используется (модальные, безличные)
+const IMP_NONE=new Set(['έχω','ξέρω','υπάρχω','μπορώ','θέλω','πρέπει','αρέσει','αρέσω','βρέχει','χιονίζει','φυσάει','είμαι','χρειάζεται','μου αρέσει',
+  'πεινάω','διψάω','πονάω','κρυώνω','νυστάζω','φταίω','λείπω','νομίζω','κοστίζω','σημαίνω','χωράω','λάμπω','πλέω']);
+const IMP_LABELS=['ты','вы','не… (ты)','не… (вы)'];
+// глаголы из таблиц учебника (Ελληνικά Α', с. 235–236)
+const IMP_BOOK=new Set(['αφήνω','αγοράζω','αλλάζω','ανοίγω','προσέχω','φτιάχνω','δουλεύω','γράφω','ανάβω',
+  'ακούω','βάζω','βγάζω','δίνω','παίρνω','πέφτω','στέλνω','τρώω','φέρνω','γίνομαι','κάνω','καταλαβαίνω',
+  'μαθαίνω','μένω','περιμένω','πηγαίνω','πλένω','φεύγω','βλέπω','βρίσκω','λέω','πίνω','βγαίνω','μπαίνω',
+  'ανεβαίνω','κατεβαίνω','ρωτάω','περνάω','φοράω','εξηγώ','καλώ','έρχομαι','κάθομαι','διαβάζω']);
+function hasImperative(w){return !!imperativeOf(w[0]);}
 const AOR_PERSON_LABELS=['я','ты','он/она','мы','вы','они'];
 (function(){
   const STRIP={'ά':'α','έ':'ε','ή':'η','ί':'ι','ό':'ο','ύ':'υ','ώ':'ω','ΐ':'ι','ΰ':'υ'};
@@ -2984,6 +3069,27 @@ const AOR_PERSON_LABELS=['я','ты','он/она','мы','вы','они'];
     return (/ώ$/.test(f)?['ώ','είς','εί','ούμε','είτε','ούν']
                         :['ω','εις','ει','ουμε','ετε','ουν']).map(e=>st+e);
   };
+  window.imperativeOf=function(pres){
+    if(IMP_NONE.has(pres)) return null;
+    const f=futureOf(pres); if(!f) return null;
+    const fut=conjugateFuture(f);
+    const neg=x=>`μη ${x} / μην ${x}`;
+    let pos;
+    if(IMP_IRREG[pres]) pos=IMP_IRREG[pres].slice();
+    else{
+      if(/μαι$/.test(pres)) return null;               // -μαι: только из таблицы
+      if(/ώ$/.test(f)||nuclei(f).length<2) return null; // θα γεννηθώ, θα μπω… — нет правила
+      const st=stripAcc(f).slice(0,-1);
+      const sg=setAccent(st+'ε',Math.min(3,nuclei(st+'ε').length));
+      const pl=/[σξψλρ]$|[αεηιουω]$/.test(st)
+        ? setAccent(st+'τε',2)
+        : setAccent(st+'ετε',Math.min(3,nuclei(st+'ετε').length));
+      pos=[sg,pl];
+      // B1 (-άω): вторая, «длительная» форма — ρώτα, πέρνα, φόρα
+      if(/άω$/.test(pres)) pos[0]=sg+' / '+setAccent(stripAcc(pres.slice(0,-2))+'α',2);
+    }
+    return [pos[0],pos[1],neg(fut[1]),neg(fut[4])];
+  };
   window.conjugateAorist=function(a1){
     if(AOR_OVERRIDE[a1]) return AOR_OVERRIDE[a1].slice();
     const accPos=accentFromEnd(a1);
@@ -3004,12 +3110,12 @@ const AOR_PERSON_LABELS=['я','ты','он/она','мы','вы','они'];
     return [a1,build('ες',false),build('ε',false),build('αμε',true),build('ατε',true),build('αν',false)];
   };
 })();
-const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','ен12':'Ενότητα 12','ен13':'Ενότητα 13','ен15':'Ενότητα 15','ен16':'Ενότητα 16','ен14':'Ενότητα 14','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','доп_глаголы':'📝 Учитель: глаголы','доп_существительные':'📝 Учитель: существительные','доп_прилагательные':'📝 Учитель: прилагательные','доп_наречия':'📝 Учитель: наречия','доп_выражения':'📝 Учитель: выражения','доп_вопросительные':'📝 Учитель: вопросит.','доп_числа':'📝 Учитель: числа','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','книга_платон':'📖 Θείος Πλάτων (книга)','предложения':'Предложения'};
+const sectionLabels={'алфавит':'Алфавит','введение':'Введение','ен1':'Ενότητα 1','ен2':'Ενότητα 2','ен3':'Ενότητα 3','ен4':'Ενότητα 4','ен6':'Ενότητα 6','ен7':'Ενότητα 7','ен8':'Ενότητα 8','ен9':'Ενότητα 9','ен11':'Ενότητα 11','ен12':'Ενότητα 12','ен13':'Ενότητα 13','ен15':'Ενότητα 15','ен16':'Ενότητα 16','ен17':'Ενότητα 17','ен14':'Ενότητα 14','клик1':'ΚΛΙΚ Ενότητα 1','клик2':'ΚΛΙΚ Ενότητα 2','доп':'Слова от учит.','доп_глаголы':'📝 Учитель: глаголы','доп_существительные':'📝 Учитель: существительные','доп_прилагательные':'📝 Учитель: прилагательные','доп_наречия':'📝 Учитель: наречия','доп_выражения':'📝 Учитель: выражения','доп_вопросительные':'📝 Учитель: вопросит.','доп_числа':'📝 Учитель: числа','еда':'🍽️ Еда','мои_слова':'✏️ Мои слова','книга_платон':'📖 Θείος Πλάτων (книга)','предложения':'Предложения'};
 
 /* ── state ── */
 let deck=[],idx=0,mode='gr-ru',okCount=0,badCount=0,checked=false,streak=0,retriedKeys=new Set();
 let matchIdx=0,matchSel={l:null,r:null},matchBatch=[],matchState=[],matchLocked=false;
-let curAoristPerson=0;
+let curAoristPerson=0,curImpForm=0;
 let progressUrl='';
 let wordStats={};  // {greek: {seen,correct}}
 let sheetsUrl='';
@@ -3036,7 +3142,7 @@ function rebuildAllData(){
 function populateTagSelect(){
   const sel=document.getElementById('cw-tag');
   if(!sel) return;
-  const order=['мои_слова','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','ен13','ен14','ен15','ен16','доп','еда'];
+  const order=['мои_слова','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','ен13','ен14','ен15','ен16','ен17','доп','еда'];
   sel.innerHTML=order.map(t=>`<option value="${t}">${sectionLabels[t]||t}</option>`).join('');
 }
 
@@ -3295,11 +3401,13 @@ function sanitizeWordStats(){
     if(s.wSeen!==undefined||s.wCorrect!==undefined){s.wSeen=num(s.wSeen);s.wCorrect=num(s.wCorrect);s.wSessions=num(s.wSessions);}
     if(s.aSeen!==undefined||s.aCorrect!==undefined){s.aSeen=num(s.aSeen);s.aCorrect=num(s.aCorrect);s.aSessions=num(s.aSessions);}
     if(s.fSeen!==undefined||s.fCorrect!==undefined){s.fSeen=num(s.fSeen);s.fCorrect=num(s.fCorrect);s.fSessions=num(s.fSessions);}
+    if(s.iSeen!==undefined||s.iCorrect!==undefined){s.iSeen=num(s.iSeen);s.iCorrect=num(s.iCorrect);s.iSessions=num(s.iSessions);}
     if(s.correct>s.seen) s.correct=s.seen;          // impossible ratio → clamp
     if(s.wCorrect>s.wSeen) s.wCorrect=s.wSeen;
     if(s.aCorrect>s.aSeen) s.aCorrect=s.aSeen;
     if(s.fCorrect>s.fSeen) s.fCorrect=s.fSeen;
-    for(const hF of ['hist','wHist','aHist','fHist']){
+    if(s.iCorrect>s.iSeen) s.iCorrect=s.iSeen;
+    for(const hF of ['hist','wHist','aHist','fHist','iHist']){
       if(s[hF]===undefined) continue;
       if(typeof s[hF]!=='string'||!/^[01]*$/.test(s[hF])) delete s[hF];
       else s[hF]=s[hF].slice(-RECENT_N);
@@ -3312,9 +3420,9 @@ function mergeProgressMax(local,cloud){
   // merge two wordStats objects, taking max per counter (safe: never rolls back)
   const out={};
   const keys=new Set([...Object.keys(local||{}),...Object.keys(cloud||{})]);
-  const numF=['seen','correct','sessions','wSeen','wCorrect','wSessions','aSeen','aCorrect','aSessions','fSeen','fCorrect','fSessions'];
-  const dayP=[['lastDay','correct'],['wLastDay','wCorrect'],['aLastDay','aCorrect'],['fLastDay','fCorrect']];
-  const histP=[['hist','seen'],['wHist','wSeen'],['aHist','aSeen'],['fHist','fSeen']];
+  const numF=['seen','correct','sessions','wSeen','wCorrect','wSessions','aSeen','aCorrect','aSessions','fSeen','fCorrect','fSessions','iSeen','iCorrect','iSessions'];
+  const dayP=[['lastDay','correct'],['wLastDay','wCorrect'],['aLastDay','aCorrect'],['fLastDay','fCorrect'],['iLastDay','iCorrect']];
+  const histP=[['hist','seen'],['wHist','wSeen'],['aHist','aSeen'],['fHist','fSeen'],['iHist','iSeen']];
   for(const key of keys){
     const x=local[key]||{}, y=cloud[key]||{}, m={};
     for(const f of numF){const vx=x[f]||0,vy=y[f]||0; if(vx||vy) m[f]=Math.max(vx,vy);}
@@ -3353,7 +3461,7 @@ function pushProgress(){
   const touched={};
   for(const k in wordStats){
     const s=wordStats[k];
-    if(s&&(s.seen||s.wSeen||s.aSeen||s.fSeen)) touched[k]=s;
+    if(s&&(s.seen||s.wSeen||s.aSeen||s.fSeen||s.iSeen)) touched[k]=s;
   }
   const keys=Object.keys(touched);
   if(!keys.length) return Promise.resolve();
@@ -3595,7 +3703,7 @@ function openStats(){
         📝 Предложения (узнавание): <strong style="color:var(--text2)">${sentKnown} / ${allSents.length}</strong> — считаются отдельно
       </div>`;
     // Show sections in a fixed order
-    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','ен13','ен14','ен15','ен16','клик1','клик2','доп_глаголы','доп_существительные','доп_прилагательные','доп_наречия','доп_выражения','доп_вопросительные','доп_числа','еда','мои_слова','книга_платон','предложения'];
+    const sectionOrder=['алфавит','введение','ен1','ен2','ен3','ен4','ен6','ен7','ен8','ен9','ен11','ен12','ен13','ен14','ен15','ен16','ен17','клик1','клик2','доп_глаголы','доп_существительные','доп_прилагательные','доп_наречия','доп_выражения','доп_вопросительные','доп_числа','еда','мои_слова','книга_платон','предложения'];
     let sectHtml='<div class="section-bars">';
     for(const tag of sectionOrder){
       const v=sections[tag];
@@ -3789,6 +3897,25 @@ function recordFuture(key,correct){
   }
   saveWordStats();
 }
+function recordImperative(key,correct){
+  if(!wordStats[key]) wordStats[key]={seen:0,correct:0,sessions:0,lastDay:''};
+  const s=wordStats[key];
+  if(!s.iSeen){s.iSeen=0;s.iCorrect=0;s.iSessions=0;s.iLastDay='';}
+  s.iSeen++;
+  s.iHist=pushHist(s.iHist,correct);
+  if(correct){
+    s.iCorrect++;
+    const today=new Date().toDateString();
+    if(s.iLastDay!==today){s.iSessions=(s.iSessions||0)+1;s.iLastDay=today;}
+  }
+  saveWordStats();
+}
+function getImperativeStatus(key){
+  const s=wordStats[key];
+  if(!s||!s.iSeen) return 'new';
+  if(s.iCorrect>=5&&(s.iSessions||0)>=2&&accOf(s.iHist,s.iCorrect,s.iSeen)>=0.7) return 'mastered';
+  return 'learning';
+}
 function getFutureStatus(key){
   const s=wordStats[key];
   if(!s||!s.fSeen) return 'new';
@@ -3819,6 +3946,7 @@ function getFullStatus(key){
 function isMasteredForMode(key,m){
   if(m==='aorist') return getAoristStatus(key)==='mastered';
   if(m==='future') return getFutureStatus(key)==='mastered';
+  if(m==='imper') return getImperativeStatus(key)==='mastered';
   return m==='ru-gr' ? getWriteStatus(key)==='mastered' : getStatus(key)==='learned';
 }
 /* ── counters/status for the mode actually being practised ──
@@ -3830,13 +3958,14 @@ function modeCounters(key,m){
   if(m==='ru-gr')  return {seen:num(s.wSeen),correct:num(s.wCorrect)};
   if(m==='aorist') return {seen:num(s.aSeen),correct:num(s.aCorrect)};
   if(m==='future') return {seen:num(s.fSeen),correct:num(s.fCorrect)};
+  if(m==='imper')  return {seen:num(s.iSeen),correct:num(s.iCorrect)};
   return {seen:num(s.seen),correct:num(s.correct)};
 }
 function modeStatus(key,m){
   if(isMasteredForMode(key,m)) return 'learned';
   return modeCounters(key,m).seen>0 ? 'learning' : 'new';
 }
-function modeLabel(m){return m==='ru-gr'?'Рус → Греч':m==='aorist'?'Аорист':m==='future'?'Будущее':'Греч → Рус';}
+function modeLabel(m){return m==='ru-gr'?'Рус → Греч':m==='aorist'?'Аорист':m==='future'?'Будущее':m==='imper'?'Повелительное':'Греч → Рус';}
 
 /* ── answer variants helper (supports "a / b (note)" → ["a","b"]) ── */
 function matchAnswer(userVal,answer){
@@ -3979,7 +4108,7 @@ function updateDropdownPct(){
   if(!sel) return;
   for(const opt of sel.options){
     const f=opt.value;
-    if(!f||['all','words','предложения','слабые','учу','выученные','новые','все_числа','все_глаголы'].includes(f)) continue;
+    if(!f||['all','words','предложения','слабые','учу','выученные','новые','все_числа','все_глаголы','глаголы_17'].includes(f)) continue;
     const sectionWords=ALL_DATA.filter(w=>tagOf(w[2])===f&&!isSentence(w));
     if(!sectionWords.length) continue;
     const learned=sectionWords.filter(w=>isMasteredForMode(w[0],mode)).length;
@@ -4026,6 +4155,7 @@ function applyFilter(){
     deck=ALL_DATA.filter(w=>!isSentence(w)&&(/[^ά]ώ$/.test(w[0])&&(w[2].includes('глагол')||b2extra.includes(w[0])))||b2extra.includes(w[0]));
   }
   else if(f==='глаголы_Г') deck=ALL_DATA.filter(w=>!isSentence(w)&&/μαι$/.test(w[0]));
+  else if(f==='глаголы_17') deck=ALL_DATA.filter(w=>!isSentence(w)&&IMP_BOOK.has(w[0]));
   else if(f==='паронимы') {
 
   const PARONYMS=new Set(['πότε','ποτέ','πού','που','πώς','ως','νωρίς','αργά',
@@ -4050,6 +4180,9 @@ function applyFilter(){
   // ── Match mode: words only, translations short enough to fit a chip ──
   if(mode==='future'){
     deck=deck.filter(w=>!isSentence(w)&&hasFuture(w));
+  }
+  if(mode==='imper'){
+    deck=deck.filter(w=>!isSentence(w)&&hasImperative(w));
   }
   if(mode==='match'){
     deck=deck.filter(w=>!isSentence(w)&&w[1]&&w[1].length<=58);
@@ -4104,6 +4237,8 @@ function setMode(m){
   if(ab) ab.className='mode-btn'+(m==='aorist'?' active':'');
   const fb=document.getElementById('btn-future');
   if(fb) fb.className='mode-btn'+(m==='future'?' active':'');
+  const ib=document.getElementById('btn-imper');
+  if(ib) ib.className='mode-btn'+(m==='imper'?' active':'');
   const mb=document.getElementById('btn-match');
   if(mb) mb.className='mode-btn'+(m==='match'?' active':'');
   applyFilter(); // rebuild deck: "new-first" priority is mode-dependent
@@ -4135,6 +4270,27 @@ function checkWord(w){
   const userVal=input.value.trim();
   if(!userVal) return;
   const ex=w[3]&&w[3]!=='s'?`<span class="ex">${w[3]}</span>`:'';
+
+  if(cm==='imper'){
+    // ΠΡΟΣΤΑΚΤΙΚΗ: форма для «ты» / «вы» / «не… (ты)» / «не… (вы)»
+    const ans=(imperativeOf(w[0])||[])[curImpForm]||'';
+    const lbl=IMP_LABELS[curImpForm];
+    const shown=`<span class="correct-ans">${w[0]} → ${ans.replace(/ \/ /g,' · ')}</span> <span style="color:var(--text3)">(${lbl})</span>`;
+    const r=evalWriting(userVal,ans);
+    if(r.level==='exact'){
+      recordImperative(w[0],true); input.className='ok';
+      document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно! ${shown}</div>`;
+    } else if(r.level==='close'){
+      recordImperative(w[0],true); input.className='close';
+      const why=r.accentOnly?'почти — следи за ударением':'почти — маленькая опечатка';
+      document.getElementById('feedback').innerHTML=`<div class="feedback close">${why}. Правильно: ${shown}</div>`;
+    } else {
+      recordImperative(w[0],false); input.className='bad';
+      document.getElementById('feedback').innerHTML=`<div class="feedback bad">Повелительное «${lbl}»: ${shown}</div>`;
+    }
+    document.getElementById('check-btn').textContent='Далее →';
+    return;
+  }
 
   if(cm==='future'){
     // БУДУЩЕЕ: пишем форму с «θα» для заданного лица. «θα» можно опустить.
@@ -4283,10 +4439,12 @@ function renderCard(){
   const isAorist=(cm==='aorist');
   const isFuture=(cm==='future');
   // pick a random person (0..5) for this aorist card
+  const isImper=(cm==='imper');
   if(isAorist||isFuture){ curAoristPerson=Math.floor(Math.random()*6); }
-  const q=(isAorist||isFuture)?w[0]:(cm==='gr-ru'?w[0]:w[1]);
-  const placeholder=isSent?'Напиши по-гречески...':isFuture?`Напиши будущее: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:isAorist?`Напиши аорист: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
-  const hint=isFuture?`→ будущее с «θα», лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isAorist?`→ аорист, лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
+  if(isImper){ curImpForm=Math.floor(Math.random()*4); }
+  const q=(isAorist||isFuture||isImper)?w[0]:(cm==='gr-ru'?w[0]:w[1]);
+  const placeholder=isSent?'Напиши по-гречески...':isImper?`Повелительное: «${IMP_LABELS[curImpForm]}»...`:isFuture?`Напиши будущее: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:isAorist?`Напиши аорист: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
+  const hint=isImper?`→ повелительное, «<strong>${IMP_LABELS[curImpForm]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isFuture?`→ будущее с «θα», лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isAorist?`→ аорист, лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
   const tagLabel=isSent?'предложение':tagOf(w[2]).replace(/ен(\d)/,'ενότητα $1').replace('алфавит','Αλφάβητο').replace('введение','Εισαγωγή');
   const mc=modeCounters(w[0],cm);
   const status=modeStatus(w[0],cm);

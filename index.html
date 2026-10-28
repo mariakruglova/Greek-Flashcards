@@ -164,6 +164,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
     <button class="mode-btn" id="btn-aorist" onclick="setMode('aorist')">⏮ Аорист</button>
     <button class="mode-btn" id="btn-future" onclick="setMode('future')">⏭ Будущее</button>
     <button class="mode-btn" id="btn-imper" onclick="setMode('imper')">❗ Повелительное</button>
+    <button class="mode-btn" id="btn-polys" onclick="setMode('polys')">🔢 πολύς</button>
     <button class="mode-btn" id="btn-match" onclick="setMode('match')">🧩 Пары</button>
     <select id="tag-filter" onchange="applyFilter()">
       <option value="all">Все разделы</option>
@@ -3293,6 +3294,56 @@ const IMP_IRREG={
 const IMP_NONE=new Set(['έχω','ξέρω','υπάρχω','μπορώ','θέλω','πρέπει','αρέσει','αρέσω','βρέχει','χιονίζει','φυσάει','είμαι','χρειάζεται','μου αρέσει',
   'αρρωσταίνω','βλάπτω','οφείλω','τρέμω','λαχανιάζω','πεινάω','διψάω','πονάω','κρυώνω','νυστάζω','φταίω','λείπω','νομίζω','κοστίζω','σημαίνω','χωράω','λάμπω','πλέω']);
 const IMP_LABELS=['ты','вы','не… (ты)','не… (вы)'];
+/* ── ΠΟΛΥΣ: тренажёр форм πολύς / πολλή / πολύ (Ενότητα 18, с. 252–253) ──
+   Карточка: [предложение с ___, правильная форма, тег, перевод]. */
+const POLYS_ITEMS=[
+  ["Υπάρχει ___ κόσμος στον δρόμο.", "πολύς", "грам_πολύς", "На улице много народу."],
+  ["Δεν ήρθε ___ κόσμος στο μάθημα σήμερα.", "πολύς", "грам_πολύς", "Сегодня на урок пришло немного народу."],
+  ["Σήμερα είχα ___ δουλειά.", "πολλή", "грам_πολύς", "Сегодня у меня было много работы."],
+  ["Είχε ___ κίνηση στον δρόμο.", "πολλή", "грам_πολύς", "На дороге было сильное движение."],
+  ["___ ησυχία υπάρχει σήμερα στο σπίτι. Τι έγινε;", "Πολλή", "грам_πολύς", "Сегодня дома очень тихо. Что случилось?"],
+  ["Πώς το θες το καφεδάκι σου; — Με ___ ζάχαρη.", "πολλή", "грам_πολύς", "Как тебе кофе? — С большим количеством сахара."],
+  ["Δεν έχω ___ όρεξη.", "πολλή", "грам_πολύς", "У меня не очень хороший аппетит."],
+  ["Χρειάζεστε ___ ξεκούραση.", "πολλή", "грам_πολύς", "Вам нужно много отдыхать."],
+  ["Δε βλέπω ___ τηλεόραση.", "πολλή", "грам_πολύς", "Я мало смотрю телевизор."],
+  ["Υπήρχε ___ στρες στο γραφείο.", "πολύ", "грам_πολύς", "В офисе было много стресса."],
+  ["Με ___ γάλα, παρακαλώ.", "πολύ", "грам_πολύς", "С большим количеством молока, пожалуйста."],
+  ["Πίνω ___ νερό κάθε μέρα.", "πολύ", "грам_πολύς", "Я пью много воды каждый день."],
+  ["Εδώ και ___ καιρό έχω πονοκέφαλο.", "πολύ", "грам_πολύς", "Уже давно у меня болит голова."],
+  ["Έχει ___ ήλιο σήμερα.", "πολύ", "грам_πολύς", "Сегодня очень солнечно."],
+  ["Στην Αθήνα υπάρχουν ___ γιατροί.", "πολλοί", "грам_πολύς", "В Афинах много врачей."],
+  ["___ οδηγοί στην Αθήνα οδηγούν σαν τρελοί.", "Πολλοί", "грам_πολύς", "Многие водители в Афинах ездят как сумасшедшие."],
+  ["Στο νοσοκομείο περίμεναν ___ άρρωστοι.", "πολλοί", "грам_πολύς", "В больнице ждали много больных."],
+  ["Ήρθαν ___ φοιτητές στο σεμινάριο.", "πολλοί", "грам_πολύς", "На семинар пришло много студентов."],
+  ["Έχω ___ φίλους σ' όλο τον κόσμο.", "πολλούς", "грам_πολύς", "У меня много друзей по всему миру."],
+  ["Ρώτησα ___ γιατρούς.", "πολλούς", "грам_πολύς", "Я спросил многих врачей."],
+  ["Η γιατρός έχει ___ ασθενείς σήμερα.", "πολλούς", "грам_πολύς", "У врача сегодня много пациентов."],
+  ["Στην πόλη υπάρχουν ___ κλινικές.", "πολλές", "грам_πολύς", "В городе много клиник."],
+  ["Άκουσα ___ γνώμες.", "πολλές", "грам_πολύς", "Я выслушал много мнений."],
+  ["Δοκίμασα ___ φορές να κόψω το τσιγάρο.", "πολλές", "грам_πολύς", "Я много раз пытался бросить курить."],
+  ["___ γυναίκες δουλεύουν με μερική απασχόληση.", "Πολλές", "грам_πολύς", "Многие женщины работают неполный день."],
+  ["Στη γειτονιά υπάρχουν ___ φαρμακεία.", "πολλά", "грам_πολύς", "В районе много аптек."],
+  ["Έχω ακόμα ___ προβλήματα.", "πολλά", "грам_πολύς", "У меня всё ещё много проблем."],
+  ["Αυτός ο γιατρός παίρνει ___ λεφτά.", "πολλά", "грам_πολύς", "Этот врач берёт много денег."],
+  ["Χρόνια ___ και καλά!", "πολλά", "грам_πολύς", "С праздником! (многих лет)"],
+  ["Πίνετε ___ υγρά: χυμούς, σούπες, τσάι.", "πολλά", "грам_πολύς", "Пейте много жидкости: соки, супы, чай."],
+  ["Τρώω ___ φρούτα και λαχανικά.", "πολλά", "грам_πολύς", "Я ем много фруктов и овощей."],
+  ["Ευχαριστώ ___!", "πολύ", "грам_πολύς", "Большое спасибо!"],
+  ["Αυτή η άσκηση είναι ___ δύσκολη.", "πολύ", "грам_πολύς", "Это упражнение очень трудное."],
+  ["Γνωρίζω έναν ___ καλό παθολόγο.", "πολύ", "грам_πολύς", "Я знаю очень хорошего терапевта."],
+  ["Φοβάμαι ___ τους γιατρούς.", "πολύ", "грам_πολύς", "Я очень боюсь врачей."],
+  ["Σήμερα βήχω ___ πολύ!", "πάρα", "грам_πολύς", "Сегодня я кашляю очень-очень сильно!"]
+];
+const POLYS_RULE={
+  'πολύς':'м. р., ед. ч., именительный (ο κόσμος → πολύς κόσμος)',
+  'πολλή':'ж. р., ед. ч. (η δουλειά → πολλή δουλειά)',
+  'πολύ':'ср. р. ед. ч. (το στρες), м. р. винительный (τον καιρό) или «очень» перед прилагательным / наречием / глаголом — не меняется',
+  'πολλοί':'м. р., мн. ч., именительный (οι γιατροί → πολλοί γιατροί)',
+  'πολλούς':'м. р., мн. ч., винительный (τους γιατρούς → πολλούς γιατρούς)',
+  'πολλές':'ж. р., мн. ч. (οι / τις κλινικές → πολλές κλινικές)',
+  'πολλά':'ср. р., мн. ч. (τα φαρμακεία → πολλά φαρμακεία)',
+  'πάρα':'πάρα πολύ = «очень-очень», усиление',
+};
 // глаголы из таблиц учебника (Ελληνικά Α', с. 235–236)
 const IMP_BOOK=new Set(['αφήνω','αγοράζω','αλλάζω','ανοίγω','προσέχω','φτιάχνω','δουλεύω','γράφω','ανάβω',
   'ακούω','βάζω','βγάζω','δίνω','παίρνω','πέφτω','στέλνω','τρώω','φέρνω','γίνομαι','κάνω','καταλαβαίνω',
@@ -4255,7 +4306,7 @@ function modeStatus(key,m){
   if(isMasteredForMode(key,m)) return 'learned';
   return modeCounters(key,m).seen>0 ? 'learning' : 'new';
 }
-function modeLabel(m){return m==='ru-gr'?'Рус → Греч':m==='aorist'?'Аорист':m==='future'?'Будущее':m==='imper'?'Повелительное':'Греч → Рус';}
+function modeLabel(m){return m==='ru-gr'?'Рус → Греч':m==='aorist'?'Аорист':m==='future'?'Будущее':m==='imper'?'Повелительное':m==='polys'?'πολύς':'Греч → Рус';}
 
 /* ── answer variants helper (supports "a / b (note)" → ["a","b"]) ── */
 function matchAnswer(userVal,answer){
@@ -4471,6 +4522,9 @@ function applyFilter(){
   if(mode==='future'){
     deck=deck.filter(w=>!isSentence(w)&&hasFuture(w));
   }
+  if(mode==='polys'){                        // свой набор, независимо от раздела
+    deck=POLYS_ITEMS.map(x=>x.slice());
+  }
   if(mode==='imper'){
     deck=deck.filter(w=>!isSentence(w)&&hasImperative(w));
   }
@@ -4529,6 +4583,8 @@ function setMode(m){
   if(fb) fb.className='mode-btn'+(m==='future'?' active':'');
   const ib=document.getElementById('btn-imper');
   if(ib) ib.className='mode-btn'+(m==='imper'?' active':'');
+  const pb=document.getElementById('btn-polys');
+  if(pb) pb.className='mode-btn'+(m==='polys'?' active':'');
   const mb=document.getElementById('btn-match');
   if(mb) mb.className='mode-btn'+(m==='match'?' active':'');
   applyFilter(); // rebuild deck: "new-first" priority is mode-dependent
@@ -4554,6 +4610,27 @@ function checkWord(w){
   if(checked) return;
   checked=true;
   const cm=cardMode(w);
+  if(cm==='polys'){
+    // ΠΟΛΥΣ: вписать нужную форму в пропуск
+    const input=document.getElementById('answer-input');
+    const userVal=input.value.trim();
+    if(!userVal){checked=false;return;}
+    const r=evalWriting(userVal,w[1]);
+    const full=w[0].replace('___',`<strong>${w[1]}</strong>`);
+    const rule=`<div style="font-size:12px;color:var(--text3);margin-top:4px">${w[1].toLowerCase()} — ${POLYS_RULE[w[1].toLowerCase()]||''}</div>`;
+    if(r.level==='exact'){
+      recordResult(w,true); input.className='ok';
+      document.getElementById('feedback').innerHTML=`<div class="feedback ok">Верно! ${full}${rule}</div>`;
+    } else if(r.level==='close'&&r.accentOnly){
+      recordResult(w,true); input.className='close';
+      document.getElementById('feedback').innerHTML=`<div class="feedback close">почти — следи за ударением. ${full}${rule}</div>`;
+    } else {
+      recordResult(w,false); input.className='bad';
+      document.getElementById('feedback').innerHTML=`<div class="feedback bad">Правильно: ${full}${rule}</div>`;
+    }
+    document.getElementById('check-btn').textContent='Далее →';
+    return;
+  }
   const aorForms=cm==='aorist'?conjugateAorist(AORIST[w[0]]||''):null;
   const a=cm==='aorist'?(aorForms[curAoristPerson]||''):(cm==='gr-ru'&&cm!=='future'?w[1]:w[0]);
   const input=document.getElementById('answer-input');
@@ -4730,12 +4807,13 @@ function renderCard(){
   const isFuture=(cm==='future');
   // pick a random person (0..5) for this aorist card
   const isImper=(cm==='imper');
+  const isPolys=(cm==='polys');
   if(isAorist||isFuture){ curAoristPerson=Math.floor(Math.random()*6); }
   if(isImper){ curImpForm=Math.floor(Math.random()*4); }
-  const q=(isAorist||isFuture||isImper)?w[0]:(cm==='gr-ru'?w[0]:w[1]);
-  const placeholder=isSent?'Напиши по-гречески...':isImper?`Повелительное: «${IMP_LABELS[curImpForm]}»...`:isFuture?`Напиши будущее: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:isAorist?`Напиши аорист: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
-  const hint=isImper?`→ повелительное, «<strong>${IMP_LABELS[curImpForm]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isFuture?`→ будущее с «θα», лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isAorist?`→ аорист, лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
-  const tagLabel=isSent?'предложение':tagOf(w[2]).replace(/ен(\d)/,'ενότητα $1').replace('алфавит','Αλφάβητο').replace('введение','Εισαγωγή');
+  const q=(isAorist||isFuture||isImper||isPolys)?w[0]:(cm==='gr-ru'?w[0]:w[1]);
+  const placeholder=isPolys?'πολύς / πολλή / πολύ / πολλοί…':isSent?'Напиши по-гречески...':isImper?`Повелительное: «${IMP_LABELS[curImpForm]}»...`:isFuture?`Напиши будущее: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:isAorist?`Напиши аорист: «${AOR_PERSON_LABELS[curAoristPerson]}»...`:cm==='gr-ru'?'Введи перевод по-русски...':'Напиши по-гречески...';
+  const hint=isPolys?`→ вставь форму <strong>πολύς</strong> · <span style="color:var(--text3)">${w[3]}</span>`:isImper?`→ повелительное, «<strong>${IMP_LABELS[curImpForm]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isFuture?`→ будущее с «θα», лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:isAorist?`→ аорист, лицо «<strong>${AOR_PERSON_LABELS[curAoristPerson]}</strong>» · <span style="color:var(--text3)">${w[1]}</span>`:cm==='gr-ru'?'→ русский':'→ греческий';
+  const tagLabel=isPolys?'πολύς · πολλή · πολύ':isSent?'предложение':tagOf(w[2]).replace(/ен(\d)/,'ενότητα $1').replace('алфавит','Αλφάβητο').replace('введение','Εισαγωγή');
   const mc=modeCounters(w[0],cm);
   const status=modeStatus(w[0],cm);
   const statusBadge=isSent?'':
@@ -4749,7 +4827,7 @@ function renderCard(){
   document.getElementById('main').innerHTML=`
   <div class="card">
     <div class="card-meta">${tagLabel}${histBadge}${statusBadge}</div>
-    <div class="card-word" style="font-size:${isSent?'17px':'26px'}">${q}</div>
+    <div class="card-word" style="font-size:${isSent?'17px':isPolys?'20px':'26px'}">${q}</div>
     <div class="card-hint">${hint}</div>
     <div class="input-row">${inputEl}
       <button id="check-btn" onclick="handleCheck()">${isSent?'Показать':'Проверить'}</button>

@@ -231,7 +231,8 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
     </select>
     <span id="deck-count-label" style="color:var(--text3);font-size:12px"></span>
     <select id="priority-select" onchange="applyFilter()" style="margin-left:auto;font-size:12px;padding:3px 8px;border-radius:8px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border2)">
-      <option value="new-first" selected>🆕 Сначала новые</option>
+      <option value="srs" selected>📅 На сегодня</option>
+      <option value="new-first">🆕 Сначала новые</option>
       <option value="hide-known">🙈 Скрыть освоенные</option>
       <option value="all">🔀 Все подряд</option>
     </select>
@@ -250,7 +251,7 @@ code{font-family:monospace;font-size:12px;background:var(--bg2);padding:2px 6px;
       <div class="prog-seg know" id="prog-know" style="width:0%"></div>
     </div>
     <div id="prog-count" style="display:flex;justify-content:space-between;font-size:11px"></div>
-    <div style="font-size:10px;color:var(--text3);text-align:center">✓ выучено = знаю перевод (Греч → Рус) <b>и</b> умею писать (Рус → Греч) · засчитывается при 70%+ верных из последних 10 ответов</div>
+    <div style="font-size:10px;color:var(--text3);text-align:center">✓ выучено = знаю перевод (Греч → Рус) <b>и</b> умею писать (Рус → Греч) · слово выучено, если ты верно ответила после перерыва в неделю</div>
   </div>
   <div id="main"></div>
 </div>
@@ -3783,6 +3784,7 @@ function loadPersisted(){
   updateSyncDot();
   try{wordStats=JSON.parse(lsGet('greek_word_stats')||'{}');}catch(e){wordStats={};}
   sanitizeWordStats();
+  migrateToSrs();
   loadCustomWords();
   if(progressUrl) pullProgress(); // fetch cloud copy on startup, merge in
 }
@@ -3799,6 +3801,50 @@ function accOf(h,correct,seen){
 }
 /* ── guard against NaN: coerce every counter to a finite number ── */
 function num(v){const n=Number(v);return Number.isFinite(n)&&n>=0?n:0;}
+/* ── ИНТЕРВАЛЬНОЕ ПОВТОРЕНИЕ (система Лейтнера) ──
+   У слова в каждом режиме свой уровень 0–5 и дата следующего повтора:
+     r = Греч→Рус (и πολύς), w = Рус→Греч, a = аорист, f = будущее, i = повелительное.
+   Поля: rBox (уровень), rDue (день повтора), rRev (день последнего ответа), rIntro (день, когда слово стало «начатым»).
+   Верно, когда слово «к повторению» → уровень +1; новое и сразу верно → уровень 2.
+   Ошибка → уровень 1, повтор завтра. Верно раньше срока → уровень не меняется.
+   «Выучено» = уровень 4+: был верный ответ после перерыва в 7 дней. */
+const SRS_IV=[0,1,3,7,14,30];          // дней до следующего повтора на уровне 0..5
+const SRS_LEARNED=4;
+const SRS_NEW_PER_DAY=20;
+const SRS_PREFIXES=['r','w','a','f','i'];
+const SRS_COUNTERS={r:['seen','correct','sessions','hist'],w:['wSeen','wCorrect','wSessions','wHist'],
+  a:['aSeen','aCorrect','aSessions','aHist'],f:['fSeen','fCorrect','fSessions','fHist'],i:['iSeen','iCorrect','iSessions','iHist']};
+function dayNum(){const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/864e5);}
+function srsPrefix(m){return m==='ru-gr'?'w':m==='aorist'?'a':m==='future'?'f':m==='imper'?'i':'r';}
+function srsBox(key,p){const s=wordStats[key];return s?num(s[p+'Box']):0;}
+function srsDue(key,p){const s=wordStats[key];return s?num(s[p+'Due']):0;}
+function srsIsDue(key,p){return srsBox(key,p)>0&&srsDue(key,p)<=dayNum();}
+function srsUpdate(s,p,correct){
+  const B=p+'Box',D=p+'Due',V=p+'Rev',today=dayNum();
+  let b=num(s[B]);
+  if(!b){ s[p+'Intro']=today; b=correct?2:1; s[D]=today+SRS_IV[b]; }
+  else if(!correct){ b=1; s[D]=today+SRS_IV[1]; }
+  else if(num(s[D])<=today){ b=Math.min(5,b+1); s[D]=today+SRS_IV[b]; }
+  // верно, но раньше срока — уровень и дата не меняются
+  s[B]=b; s[V]=today;
+}
+function keySpread(k,n){let h=0;for(const c of k)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)%n;}
+// перенос старого прогресса: у кого уже есть ответы, но ещё нет уровня
+function migrateToSrs(){
+  const today=dayNum();
+  for(const k in wordStats){
+    const s=wordStats[k]; if(!s) continue;
+    for(const p of SRS_PREFIXES){
+      const [sf,cf,ssf,hf]=SRS_COUNTERS[p];
+      const seen=num(s[sf]); if(!seen||s[p+'Box']!==undefined) continue;
+      const cor=num(s[cf]),acc=accOf(s[hf],cor,seen);
+      if(cor>=5&&num(s[ssf])>=2&&acc>=0.7){ s[p+'Box']=4; s[p+'Due']=today+keySpread(k+p,7); }
+      else if(cor>=2&&acc>=0.7){ s[p+'Box']=2; s[p+'Due']=today+keySpread(k+p,3); }
+      else { s[p+'Box']=1; s[p+'Due']=today+keySpread(k+p,2); }
+      s[p+'Rev']=0;
+    }
+  }
+}
 /* ── дубли, убранные из словаря: прогресс старой карточки переносится в оставшуюся ── */
 const KEY_MERGE=[
   ['μιλάω / μιλώ','μιλάω'],['πηγαίνω / πάω','πηγαίνω'],['Έγινε.','Έγινε!'],
@@ -3815,6 +3861,8 @@ function migrateMergedKeys(){
 }
 function sanitizeWordStats(){
   migrateMergedKeys();
+  for(const k in wordStats){const s=wordStats[k];if(!s||typeof s!=='object')continue;
+    for(const p of SRS_PREFIXES) for(const f of ['Box','Due','Rev','Intro']) if(s[p+f]!==undefined) s[p+f]=num(s[p+f]);}
   for(const k in wordStats){
     const s=wordStats[k];
     if(!s||typeof s!=='object'){delete wordStats[k];continue;}
@@ -3857,6 +3905,13 @@ function mergeProgressMax(local,cloud){
       const h=((x[seenF]||0)>=(y[seenF]||0)?x[hF]:y[hF])||x[hF]||y[hF];
       if(h) m[hF]=h;
     }
+    // интервальное повторение: берём состояние с той стороны, где отвечали позже
+    for(const p of ['r','w','a','f','i']){
+      const fx=x[p+'Box']!==undefined, fy=y[p+'Box']!==undefined;
+      if(!fx&&!fy) continue;
+      const src=!fy?x:!fx?y:((x[p+'Rev']||0)>(y[p+'Rev']||0)||((x[p+'Rev']||0)===(y[p+'Rev']||0)&&(x[p+'Box']||0)>=(y[p+'Box']||0)))?x:y;
+      for(const f of ['Box','Due','Rev','Intro']) if(src[p+f]!==undefined) m[p+f]=src[p+f];
+    }
     out[key]=m;
   }
   return out;
@@ -3869,6 +3924,7 @@ function pullProgress(){
       if(cloud&&typeof cloud==='object'){
         wordStats=mergeProgressMax(wordStats,cloud);
         sanitizeWordStats();
+        migrateToSrs();
         saveWordStats();
         if(typeof updateProgress==='function') updateProgress();
       }
@@ -3981,6 +4037,7 @@ function recordResult(w,correct,trackSRS=true){
       const today=new Date().toDateString();
       if(s.lastDay!==today){s.sessions=(s.sessions||0)+1;s.lastDay=today;}
     }
+    srsUpdate(s,'r',correct);
     saveWordStats();
   }
   // Track today's count
@@ -4263,8 +4320,8 @@ function cardMode(w){return isSentence(w)?'ru-gr':mode;}
 /* ── status helpers ── */
 function getStatus(key){
   const s=wordStats[key];
-  if(!s||s.seen===0) return 'new';
-  if(s.correct>=5&&(s.sessions||0)>=2&&accOf(s.hist,s.correct,s.seen)>=0.7) return 'learned';
+  if(!s||(!s.seen&&!num(s.rBox))) return 'new';
+  if(num(s.rBox)>=SRS_LEARNED) return 'learned';
   return 'learning';
 }
 function isWeak(key){
@@ -4283,12 +4340,13 @@ function recordWriting(key,correct){
     const today=new Date().toDateString();
     if(s.wLastDay!==today){s.wSessions=(s.wSessions||0)+1;s.wLastDay=today;}
   }
+  srsUpdate(s,'w',correct);
   saveWordStats();
 }
 function getWriteStatus(key){
   const s=wordStats[key];
-  if(!s||!s.wSeen) return 'new';
-  if(s.wCorrect>=5&&(s.wSessions||0)>=2&&accOf(s.wHist,s.wCorrect,s.wSeen)>=0.7) return 'mastered';
+  if(!s||(!s.wSeen&&!num(s.wBox))) return 'new';
+  if(num(s.wBox)>=SRS_LEARNED) return 'mastered';
   return 'learning';
 }
 /* ── aorist (past tense) progress: independent counter, like writing ── */
@@ -4303,6 +4361,7 @@ function recordAorist(key,correct){
     const today=new Date().toDateString();
     if(s.aLastDay!==today){s.aSessions=(s.aSessions||0)+1;s.aLastDay=today;}
   }
+  srsUpdate(s,'a',correct);
   saveWordStats();
 }
 function recordFuture(key,correct){
@@ -4316,6 +4375,7 @@ function recordFuture(key,correct){
     const today=new Date().toDateString();
     if(s.fLastDay!==today){s.fSessions=(s.fSessions||0)+1;s.fLastDay=today;}
   }
+  srsUpdate(s,'f',correct);
   saveWordStats();
 }
 function recordImperative(key,correct){
@@ -4329,24 +4389,25 @@ function recordImperative(key,correct){
     const today=new Date().toDateString();
     if(s.iLastDay!==today){s.iSessions=(s.iSessions||0)+1;s.iLastDay=today;}
   }
+  srsUpdate(s,'i',correct);
   saveWordStats();
 }
 function getImperativeStatus(key){
   const s=wordStats[key];
-  if(!s||!s.iSeen) return 'new';
-  if(s.iCorrect>=5&&(s.iSessions||0)>=2&&accOf(s.iHist,s.iCorrect,s.iSeen)>=0.7) return 'mastered';
+  if(!s||(!s.iSeen&&!num(s.iBox))) return 'new';
+  if(num(s.iBox)>=SRS_LEARNED) return 'mastered';
   return 'learning';
 }
 function getFutureStatus(key){
   const s=wordStats[key];
-  if(!s||!s.fSeen) return 'new';
-  if(s.fCorrect>=5&&(s.fSessions||0)>=2&&accOf(s.fHist,s.fCorrect,s.fSeen)>=0.7) return 'mastered';
+  if(!s||(!s.fSeen&&!num(s.fBox))) return 'new';
+  if(num(s.fBox)>=SRS_LEARNED) return 'mastered';
   return 'learning';
 }
 function getAoristStatus(key){
   const s=wordStats[key];
-  if(!s||!s.aSeen) return 'new';
-  if(s.aCorrect>=5&&(s.aSessions||0)>=2&&accOf(s.aHist,s.aCorrect,s.aSeen)>=0.7) return 'mastered';
+  if(!s||(!s.aSeen&&!num(s.aBox))) return 'new';
+  if(num(s.aBox)>=SRS_LEARNED) return 'mastered';
   return 'learning';
 }
 /* ── combined three-tier status ──
@@ -4613,7 +4674,7 @@ function applyFilter(){
   }
 
   // ── Priority ordering (mode-aware): "mastered for current mode" defined by active mode ──
-  const prio=document.getElementById('priority-select')?.value||'new-first';
+  const prio=document.getElementById('priority-select')?.value||'srs';
   const isMast=w=>isMasteredForMode(w[0],mode);       // mastered in the mode we're studying
   const rank=w=>{ // 0=new(this mode), 1=in progress, 2=mastered(this mode)
     if(isMast(w)) return 2;
@@ -4626,7 +4687,18 @@ function applyFilter(){
     const kept=deck.filter(w=>!isMast(w));
     if(kept.length>0) deck=kept;
   }
-  if(prio==='all'){
+  let srsInfo='';
+  if(prio==='srs'&&mode!=='match'){
+    // сначала то, что пора повторить (самое просроченное первым), потом новые — до лимита в день
+    const p=srsPrefix(mode), today=dayNum();
+    const due=deck.filter(w=>srsIsDue(w[0],p));
+    shuffle(due); due.sort((a,b)=>srsDue(a[0],p)-srsDue(b[0],p));
+    const introToday=Object.values(wordStats).filter(s=>s&&num(s[p+'Intro'])===today).length;
+    const fresh=deck.filter(w=>!srsBox(w[0],p)); shuffle(fresh);
+    const newLeft=Math.max(0,SRS_NEW_PER_DAY-introToday);
+    deck=[...due,...fresh.slice(0,newLeft)];
+    srsInfo=`📅 ${due.length} повторить · ${Math.min(newLeft,fresh.length)} новых`;
+  } else if(prio==='all'){
     shuffle(deck);
   } else {
     // new-first (and hide-known remainder): sort by rank, shuffle within groups
@@ -4638,7 +4710,7 @@ function applyFilter(){
   // Session limit: priority items first, pad with mastered
   const lim=parseInt(document.getElementById("limit-select")?.value||"0");
   if(lim>0&&deck.length>lim){
-    if(prio==='all'){ deck=deck.slice(0,lim); }
+    if(prio==='all'||prio==='srs'){ deck=deck.slice(0,lim); }
     else {
       const pri=deck.filter(w=>!isMast(w));
       const done=deck.filter(w=>isMast(w));
@@ -4646,7 +4718,7 @@ function applyFilter(){
     }
   }
   const lbl=document.getElementById("deck-count-label");
-  if(lbl) lbl.textContent=deck.length+" карт.";
+  if(lbl) lbl.textContent=srsInfo||(deck.length+" карт.");
   idx=0;okCount=0;badCount=0;streak=0;checked=false;retriedKeys=new Set();
   matchIdx=0;matchSel={l:null,r:null};matchLocked=false;
   updateStats();updateProgress();
@@ -4898,7 +4970,13 @@ function verbTypeBadge(greek,tag){
   return null;
 }
 function renderCard(){
-  if(!deck.length){document.getElementById('main').innerHTML='<div class="done-box"><h2>Нет карточек</h2></div>';return;}
+  if(!deck.length){
+    const srsMode=(document.getElementById('priority-select')?.value||'srs')==='srs';
+    document.getElementById('main').innerHTML=srsMode
+      ?'<div class="done-box"><h2>🎉 На сегодня всё!</h2><p>Всё, что нужно было повторить, повторено, лимит новых слов на сегодня пройден. Приходи завтра — или выбери «🔀 Все подряд» для свободной тренировки (уровни слов от этого не сбиваются).</p></div>'
+      :'<div class="done-box"><h2>Нет карточек</h2></div>';
+    return;
+  }
   const w=deck[idx];
   const cm=cardMode(w);
   const isSent=isSentence(w);
@@ -4917,7 +4995,7 @@ function renderCard(){
   const status=modeStatus(w[0],cm);
   const statusBadge=isSent?'':
     status==='learned'?'<span class="status-badge status-learned">✓ выучено</span>':
-    status==='learning'?`<span class="status-badge status-learning">✦${mc.correct}/${mc.seen}</span>`:
+    status==='learning'?`<span class="status-badge status-learning" title="уровень повторения">ур. ${srsBox(w[0],srsPrefix(cm))}/5</span>`:
     '<span class="status-badge status-new">новое</span>';
   const histBadge=mc.seen>0?`<span style="font-size:11px;color:var(--text3);margin-left:4px">(${Math.round(mc.correct/mc.seen*100)}%)</span>`:'';
   const inputEl=isSent?
